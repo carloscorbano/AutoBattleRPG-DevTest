@@ -1,5 +1,5 @@
-#include "Grid.h"
-#include "Types.h"
+#include "../public/Grid.h"
+#include "../public/Types.h"
 
 
 Grid::Grid(int Lines, int Columns)

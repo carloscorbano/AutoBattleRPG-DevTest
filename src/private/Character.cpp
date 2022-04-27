@@ -1,7 +1,7 @@
-#include "Grid.h"
-#include "Character.h"
-#include "Types.h"
-#include "Character.h"
+#include "../public/Grid.h"
+#include "../public/Character.h"
+#include "../public/Types.h"
+#include "../public/Character.h"
 #include <vector>
 #include <algorithm>
 

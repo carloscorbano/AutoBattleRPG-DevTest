@@ -1,9 +1,9 @@
-#include "Grid.h"
-#include "BattleField.h"
-#include "Types.h"
-#include "Character.h"
+#include "../public/Grid.h"
+#include "../public/BattleField.h"
+#include "../public/Types.h"
+#include "../public/Character.h"
 #include <iostream>
-#include "BattleField.h"
+#include "../public/BattleField.h"
 #include <list>
 #include <string>
 
