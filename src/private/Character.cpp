@@ -1,12 +1,6 @@
-#include "../public/Grid.h"
 #include "../public/Character.h"
-#include "../public/Types.h"
-#include "../public/Character.h"
-#include <vector>
-#include <algorithm>
 
-using namespace std;
-Character::Character(Types::CharacterClass charcaterClass)
+Character::Character(Types::CharacterClass characterClass)
 {
 
 }
@@ -16,32 +10,16 @@ Character::~Character()
 
 }
 
-bool Character::TakeDamage(float amount) 
+void Character::SetData(float health, float baseDamage, int index)
 {
-	if ((Health -= BaseDamage) <= 0) 
-	{
-		Die();
-		return true;
-	}
-	return false;
+    health = health;
+    baseDamage = baseDamage;
+    playerIndex = index;
 }
 
-void Character::Die() 
+void Character::StartTurn(Grid* battlefield)
 {
-	// TODO >> kill
-	//TODO >> end the game?
-}
-
-void Character::WalkTo(bool CanWalk) 
-{
-
-}
-
-
-
-void Character::StartTurn(Grid* battlefield) {
-
-    {
+    /* {
 
         if (CheckCloseTargets(battlefield))
         {
@@ -52,12 +30,12 @@ void Character::StartTurn(Grid* battlefield) {
         }
         else
         {   // if there is no target close enough, calculates in wich direction this character should move to be closer to a possible target
-            
-            
+
+
             if (currentBox.xIndex > target->currentBox.xIndex)
             {
-                if(find(battlefield->grids.begin(), battlefield->grids.end(), currentBox.Index - 1) != battlefield->grids.end())
-                
+                if (find(battlefield->grids.begin(), battlefield->grids.end(), currentBox.Index - 1) != battlefield->grids.end())
+
                 {
                     currentBox.ocupied = false;
                     battlefield->grids[currentBox.Index] = currentBox;
@@ -107,15 +85,55 @@ void Character::StartTurn(Grid* battlefield) {
             }
         }
     }
+    */
+}
+
+bool Character::TakeDamage(float amount) 
+{
+	if ((health -= baseDamage) <= 0)
+	{
+		Die();
+		return true;
+	}
+	return false;
+}
+
+int Character::GetIndex(std::vector<Types::GridBox*> v, int index)
+{
+    //return playerIndaex;
+    return 0;
+}
+
+bool Character::IsDead() const
+{
+    return isDead;
+}
+
+void Character::WalkTo(bool CanWalk) 
+{
+
 }
 
 bool Character::CheckCloseTargets(Grid* battlefield)
 {
-
+    return false;
 }
 
 void Character::Attack(Character* target) 
 {
 
 }
+
+void Character::SetTarget(Character* target)
+{
+    if (target != nullptr)
+        target = target;
+}
+
+void Character::Die()
+{
+    // TODO >> kill
+    //TODO >> end the game?
+}
+
 

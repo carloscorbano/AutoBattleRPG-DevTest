@@ -1,76 +1,154 @@
-#include "../public/Grid.h"
 #include "../public/BattleField.h"
-#include "../public/Types.h"
-#include "../public/Character.h"
+
 #include <iostream>
-#include "../public/BattleField.h"
-#include <list>
-#include <string>
+#include <sstream>
 
-using namespace std;
+BattleField::BattleField()
+{
+    currentTurn = 0;
+    gameState = Types::GameState::Setup;
+    numberOfPossibleTiles = 0;
+}
 
-BattleField::BattleField() {
-    
-    grid = new Grid(5, 5);
-    AllPlayers = new list<Character>();
-    int currentTurn = 0;
-    int numberOfPossibleTiles = grid->grids.size();
-    Setup();
+void BattleField::Initialize()
+{
+    gameState = Types::GameState::Setup;
+
+    while (true)
+    {
+        switch (gameState)
+        {
+        case Types::GameState::Setup:
+        {
+            Setup();
+            gameState = Types::GameState::CreatingCharacters;
+        }
+            break;
+        case Types::GameState::CreatingCharacters:
+        {
+            int choice = GetPlayerChoice();
+            ClearConsole();
+            CreatePlayerCharacter(choice);
+            CreateEnemyCharacter();
+            gameState = Types::GameState::GameEnded; //TEMP: change GameEnded to SelectingCharacter state.
+        }
+            break;
+            ///MAIN GAME LOOP AREA
+        case Types::GameState::MainGameLoop_SelectingCharacter:
+            break;
+        case Types::GameState::MainGameLoop_ResolvingCharacterTurn:
+            break;
+        case Types::GameState::MainGameLoop_FinishedTurn:
+            break;
+        case Types::GameState::MainGameLoop_CheckEndGame:
+            break;
+            ///----------- MAIN GAME LOOP AREA END
+        case Types::GameState::Cleanup:
+            break;
+        case Types::GameState::GameEnded:
+            break;
+        default:
+            break;
+        }
+
+        if (gameState == Types::GameState::GameEnded)
+        {
+            break;
+        }
+    }
+}
+
+void BattleField::ClearConsole()
+{
+    std::cout << "\x1B[2J\x1B[H";
 }
 
 void BattleField::Setup()
 {
-  
-   
-    GetPlayerChoice();
+    //grid = new Grid(5, 5);
+    //allCharacters = std::list<std::unique_ptr<Character>>();
+
+    //asks for the player to choose the grid size
+    printf("Choose a grid size, the limit for x is min: %i max: %i and y is min: %i max: %i. Example: x,y\n", MIN_GRID_X, MAX_GRID_X, MIN_GRID_Y, MAX_GRID_Y);
+    std::string choice;
+    int x, y;
+    x = y = 0;
+    
+    while (std::getline(std::cin, choice))
+    {
+        //read line to get x and y
+        std::stringstream ss;
+        for (int i = 0; i < choice.size(); ++i)
+        {
+            //delim
+            if (choice[i] == ',')
+            {
+                ss >> x;
+                ss.str(std::string());
+                ss.clear();
+                ++i;
+            }
+
+            ss << choice[i];
+        }
+
+        ss >> y;
+
+        //check value inserted
+        if (x < MIN_GRID_X || x > MAX_GRID_X || y < MIN_GRID_Y || y > MAX_GRID_Y)
+        {
+            ClearConsole();
+            printf("Invalid grid size inserted, please follow the example to setup correctly.\n");
+            printf("Choose a grid size, the limit for x is min: %i max: %i and y is min: %i max: %i. Example: x,y\n", MIN_GRID_X, MAX_GRID_X, MIN_GRID_Y, MAX_GRID_Y);
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    currentTurn = 0;
+    //numberOfPossibleTiles = grid->grids.size();
 }
 
-void BattleField::GetPlayerChoice()
+int BattleField::GetPlayerChoice()
 {
+    ClearConsole();
     //asks for the player to choose between for possible classes via console.
     printf("Choose Between One of this Classes:\n");
 
-    printf("[1] Paladin, [2] Warrior, [3] Cleric, [4] Archer");
+    printf("[1] Paladin, [2] Warrior, [3] Cleric, [4] Archer\n");
     //store the player choice in a variable
     std::string choice;
-
-    std::getline(std::cin, choice);
-    
-    cin >> choice;
-    switch ((choice))
+    int classID = 0;
+    while (std::getline(std::cin, choice))
     {
-    case "1":
-        CreatePlayerCharacter(choice);
-        break;
-    case "2":
-        CreatePlayerCharacter(choice);
-        break;
-    case "3":
-        CreatePlayerCharacter(choice);
-        break;
-    case "4":
-        CreatePlayerCharacter(choice);
-        break;
-    default:
-        GetPlayerChoice();
-        break;
+        std::stringstream ss(choice);
+        if (ss >> classID)
+        {
+            if (ss.eof() && (classID >= static_cast<int>(Types::CharacterClass::Paladin) && classID <= static_cast<int>(Types::CharacterClass::Archer)))
+            {
+                break;
+            }
+        }
+
+        ClearConsole();
+        printf("Error, your choice was invalid, please enter the correct number.\n");
+        printf("Choose Between One of this Classes:\n");
+
+        printf("[1] Paladin, [2] Warrior, [3] Cleric, [4] Archer\n");
     }
+
+    return classID;
 }
 
 void BattleField::CreatePlayerCharacter(int classIndex)
 {
-
-    Types::CharacterClass* characterClass = (Types::CharacterClass*)classIndex;
-    printf("Player Class Choice: {characterClass}");
+    Types::CharacterClass characterClass = static_cast<Types::CharacterClass>(classIndex);
+    printf("Player Class Choice: %s\n", Types::GetStringFromCharacterClass(characterClass).c_str());
     
-    PlayerCharacter = std::make_shared<Character>(characterClass);
-    
-    PlayerCharacter->Health = 100;
-    PlayerCharacter->BaseDamage = 20;
-    PlayerCharacter->PlayerIndex = 0;
-
-    CreateEnemyCharacter();
-
+    //playerCharacter = std::make_shared<Character>(characterClass);
+    //playerCharacter->SetData(100, 20, 0);
 }
 
 void BattleField::CreateEnemyCharacter()
@@ -79,24 +157,20 @@ void BattleField::CreateEnemyCharacter()
     
     int randomInteger = GetRandomInt(1, 4);
     Types::CharacterClass enemyClass = (Types::CharacterClass)randomInteger;
-    printf("Enemy Class Choice: {enemyClass}");
-    EnemyCharacter = new Character(enemyClass);
-    EnemyCharacter->Health = 100;
-    PlayerCharacter->BaseDamage = 20;
-    PlayerCharacter->PlayerIndex = 1;
-    StartGame();
-
+    printf("Enemy Class Choice: %s\n", Types::GetStringFromCharacterClass(enemyClass).c_str());
+    //enemyCharacter = std::make_shared<Character>(enemyClass);
+    //enemyCharacter->SetData(100, 20, 1);
 }
 
 void BattleField::StartGame()
 {
     //populates the character variables and targets
-    EnemyCharacter->target = PlayerCharacter;
-    PlayerCharacter->target = EnemyCharacter;
-    AllPlayers->push_back(PlayerCharacter);
-    AllPlayers->push_back(EnemyCharacter);
-    AlocatePlayers();
-    StartTurn();
+    //enemyCharacter->SetTarget(playerCharacter);
+    //playerCharacter->SetTarget(enemyCharacter);
+    //allPlayers->push_back(playerCharacter);
+    //allPlayers->push_back(enemyCharacter);
+    //AlocatePlayers();
+    //StartTurn();
 
 }
 
@@ -108,9 +182,9 @@ void BattleField::StartTurn() {
     }
     std::list<Character>::iterator it;
 
-    for (it = AllPlayers->begin(); it != AllPlayers->end(); ++it) {
-        it->StartTurn(grid);
-    }
+    //for (it = allPlayers->begin(); it != allPlayers->end(); ++it) {
+    //    it->StartTurn(grid);
+    //}
 
     currentTurn++;
     HandleTurn();
@@ -118,37 +192,38 @@ void BattleField::StartTurn() {
 
 void BattleField::HandleTurn()
 {
-    if (PlayerCharacter->Health == 0)
-    {
-        return;
-    }
-    else if (EnemyCharacter->Health == 0)
-    {
-        printf("\n");
-
-        // endgame?
-
-        printf("\n");
-
-        return;
-    }
-    else
-    {
-        printf("\n");
-        printf("Click on any key to start the next turn...\n");
-        printf("\n");
-
-        //TODO
-        //ConsoleKeyInfo key = Console.ReadKey();
-        StartTurn();
-    }
+    //if (playerCharacter->IsDead())
+    //{
+    //    return;
+    //}
+    //else if (enemyCharacter->IsDead())
+    //{
+    //    printf("\n");
+    //
+    //    // endgame?
+    //
+    //    printf("\n");
+    //
+    //    return;
+    //}
+    //else
+    //{
+    //    printf("\n");
+    //    printf("Click on any key to start the next turn...\n");
+    //    printf("\n");
+    //
+    //    //TODO
+    //    //ConsoleKeyInfo key = Console.ReadKey();
+    //    StartTurn();
+    //}
 }
 
 int BattleField::GetRandomInt(int min, int max)
 {
-    
-    int index = GetRandomInt(min, max);
-    return index;
+    //Infinite loop
+    //int index = GetRandomInt(min, max);
+    //return index;
+    return 0;
 }
 
 void BattleField::AlocatePlayers()
@@ -159,44 +234,44 @@ void BattleField::AlocatePlayers()
 
 void BattleField::AlocatePlayerCharacter()
 {
-    int random = 0;
-    auto l_front = grid->grids.begin();
-    advance(l_front, random);
-    Types::GridBox* RandomLocation = &*l_front;
-
-    if (!RandomLocation->ocupied)
-    {
-        //Types::GridBox* PlayerCurrentLocation = RandomLocation;
-        PlayerCurrentLocation = &*l_front;
-        l_front->ocupied = true;
-        PlayerCharacter->currentBox = *l_front;
-        AlocateEnemyCharacter();
-    }
-    else
-    {
-        AlocatePlayerCharacter();
-    }
+    //int random = 0;
+    //auto l_front = grid->grids.begin();
+    //advance(l_front, random);
+    //Types::GridBox* RandomLocation = &*l_front;
+    //
+    //if (!RandomLocation->ocupied)
+    //{
+    //    //Types::GridBox* PlayerCurrentLocation = RandomLocation;
+    //    playerCurrentLocation = &*l_front;
+    //    l_front->ocupied = true;
+    //    playerCharacter->currentBox = *l_front;
+    //    AlocateEnemyCharacter();
+    //}
+    //else
+    //{
+    //    AlocatePlayerCharacter();
+    //}
 }
 
 void BattleField::AlocateEnemyCharacter()
 {
     
-    int random = 24;
-    auto l_front = grid->grids.begin();
-    advance(l_front, random);
-    Types::GridBox* RandomLocation = &*l_front;
-    
-    if (!RandomLocation->ocupied)
-    {
-        EnemyCurrentLocation = &*l_front;
-        l_front->ocupied = true;
-        EnemyCharacter->currentBox = *l_front;
-        grid->drawBattlefield(5, 5);
-    }
-    else
-    {
-        AlocateEnemyCharacter();
-    }
+    //int random = 24;
+    //auto l_front = grid->grids.begin();
+    //advance(l_front, random);
+    //Types::GridBox* RandomLocation = &*l_front;
+    //
+    //if (!RandomLocation->ocupied)
+    //{
+    //    enemyCurrentLocation = &*l_front;
+    //    l_front->ocupied = true;
+    //    enemyCharacter->currentBox = *l_front;
+    //    grid->drawBattlefield(5, 5);
+    //}
+    //else
+    //{
+    //    AlocateEnemyCharacter();
+    //}
 
 
 }

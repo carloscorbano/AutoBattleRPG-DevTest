@@ -1,30 +1,28 @@
-#pragma once
+#pragma 
+
 #include "Character.h"
-#include "Types.h"
 #include <list>
-#include <iostream>
-#include "Grid.h"
-using namespace std;
+
+#define MIN_GRID_X 4
+#define MIN_GRID_Y 4
+#define MAX_GRID_X 10
+#define MAX_GRID_Y 10
+
 class BattleField
 {
 public:
-
+	
 	BattleField();
+	
+	void Initialize();
 
-	Grid* grid;
-	Types::GridBox* PlayerCurrentLocation;
-	Types::GridBox* EnemyCurrentLocation;
-	list<Character>* AllPlayers;
-	shared_ptr<Character> PlayerCharacter;
-	//Character* PlayerCharacter;
-	shared_ptr<Character>* EnemyCharacter;
-	int currentTurn;
-	int numberOfPossibleTiles;
+	static void ClearConsole();
 
+private:
 
 	void Setup();
 
-	void GetPlayerChoice();
+	int GetPlayerChoice();
 
 	void CreatePlayerCharacter(int classIndex);
 
@@ -43,6 +41,13 @@ public:
 	void AlocatePlayerCharacter();
 
 	void AlocateEnemyCharacter();
+
+private:
+	std::unique_ptr<Grid> grid;
+	Types::GameState gameState;
+	std::list<std::unique_ptr<Character>> allCharacters;
+	int currentTurn;
+	int numberOfPossibleTiles;
 };
 
 

@@ -1,44 +1,50 @@
 #pragma once
 #include "Grid.h"
-#include "Character.h"
-#include "Types.h"
+
+#include <memory>
+#include <bitset>
+
+#define FLAG_SIZE 1
+#define FLAG_PLAYER 0
+#define FLAG_ENEMY 1
 
 class Character
 {
 public:
 
-    Character(Types::CharacterClass charcaterClass);
+    Character(Types::CharacterClass characterClass);
     ~Character();
 
-    
-    float Health;
-    float BaseDamage;
-    float DamageMultiplier;
-    //public GridBox currentBox;
-    int PlayerIndex;
-    //public Character Target{ get; set; }
-
-    Character* target;
-
-    bool IsDead;
-    char Icon;
-
-    Types::GridBox currentBox;
-
+    void SetData(float health, float baseDamage, int index);
+    void StartTurn(Grid* battlefield);
     bool TakeDamage(float amount);
 
-    int getIndex(vector<Types::GridBox*> v, int index);
+    //TODO: ANALYSE THIS METHOD AND IT'S DEFINITION.
+    int GetIndex(std::vector<Types::GridBox*> v, int index);
+    bool IsDead() const;
 
-    void Die();
-
+private:
     void WalkTo(bool CanWalk);
-
-    void StartTurn(Grid* battlefield);
 
     bool CheckCloseTargets(Grid* battlefield);
 
     void Attack(Character* target);
 
+    void SetTarget(Character* target);
 
+    void Die();
+
+private:
+    float health;
+    float baseDamage;
+    float damageMultiplier;
+    //Types::GridBox currentBox;
+    int playerIndex;
+    std::bitset<FLAG_SIZE> flag;
+
+    Character* target;
+
+    bool isDead;
+    char icon;
 };
 
