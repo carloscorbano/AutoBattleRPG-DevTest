@@ -15,6 +15,8 @@ public:
 	
 	void Initialize();
 
+	void DrawBattleField();
+
 private:
 
 	void Setup();

@@ -8,6 +8,8 @@
 
 BattleField::BattleField()
 {
+    totalNumberOfEnemies = 0;
+    totalNumberOfPlayers = 0;
     currentTurn = 0;
     gameState = Types::GameState::Setup;
     numberOfPossibleTiles = 0;
@@ -71,6 +73,41 @@ void BattleField::Initialize()
             break;
         }
     }
+}
+
+void BattleField::DrawBattleField()
+{
+    Helper::ClearConsole();
+    
+    for (auto it = grid->grids.begin(); it != grid->grids.end(); ++it)
+    {
+        auto current = *it;
+        
+        if ((current.xIndex % grid->xLength) == 0 && current.Index != 0)
+        {
+            printf("\n");
+        }
+
+        if (current.ocupiedID == -1)
+        {
+            printf("[ ]");
+        }
+        else
+        {
+            //get the player from ocupiedID
+            for (auto itc = allCharacters.begin(); itc != allCharacters.end(); ++itc)
+            {
+                if ((*itc)->GetIndex() == current.ocupiedID)
+                {
+                    //get the icon of the user that is in the gridbox.
+                    printf("[%c]", (*itc)->GetIcon());
+                    break;
+                }
+            }
+        }
+    }
+
+    printf("\n");
 }
 
 void BattleField::Setup()
@@ -143,11 +180,13 @@ void BattleField::CreatePlayerCharacter(int classIndex)
     Helper::BaseStatusFromCharacterClass(characterClass, health, baseDamage, energy);
 
     //Choose a random location to spawn the player, this location must not have any other characters.
-    Types::GridBox spawnLocation = grid->GetRandomAvailableGridBoxInQuad(0, 0, grid->xLenght / 2, grid->yLength / 2);
+    int playerID = allCharacters.size();
+    int spawnLocation = grid->GetRandomAvailableIndexInQuad(0, 0, grid->xLength / 2, grid->yLength / 2);
+    grid->grids[spawnLocation].ocupiedID = playerID;
 
     //Create character object.
-    allCharacters.push_back(std::make_shared<Character>(Character(characterClass, health, baseDamage, allCharacters.size(),
-        PLAYER_CHARACTER_ICON, energy, spawnLocation, Types::CharacterFlag::Player)));
+    allCharacters.push_back(std::make_shared<Character>(Character(characterClass, health, baseDamage, playerID,
+        PLAYER_CHARACTER_ICON, energy, grid->grids[spawnLocation], Types::CharacterFlag::Player)));
     //Increase total players
     ++totalNumberOfPlayers;
 }
@@ -165,11 +204,13 @@ void BattleField::CreateEnemyCharacter()
     Helper::BaseStatusFromCharacterClass(enemyClass, health, baseDamage, energy);
 
     //Choose a random location to spawn the enemy, this location must not have any other characters.
-    Types::GridBox spawnLocation = grid->GetRandomAvailableGridBoxInQuad(grid->xLenght / 2, grid->yLength / 2, grid->xLenght - 1, grid->yLength - 1);
-    
+    int playerID = allCharacters.size();
+    int spawnLocation = grid->GetRandomAvailableIndexInQuad(grid->xLength / 2, grid->yLength / 2, grid->xLength - 1, grid->yLength - 1);
+    grid->grids[spawnLocation].ocupiedID = playerID;
+
     //Create character obj
-    allCharacters.push_back(std::make_shared<Character>(Character(enemyClass, health, baseDamage, allCharacters.size(),
-        ENEMY_CHARACTER_ICON, energy, spawnLocation, Types::CharacterFlag::Enemy)));
+    allCharacters.push_back(std::make_shared<Character>(Character(enemyClass, health, baseDamage, playerID,
+        ENEMY_CHARACTER_ICON, energy, grid->grids[spawnLocation], Types::CharacterFlag::Enemy)));
 
     //increase total enemies
     ++totalNumberOfEnemies;
@@ -182,6 +223,8 @@ void BattleField::StartGame()
     std::mt19937 generator(rd());
     std::shuffle(allCharacters.begin(), allCharacters.end(), generator);
 
+    DrawBattleField();
+
     //populates the character variables and targets
     //enemyCharacter->SetTarget(playerCharacter);
     //playerCharacter->SetTarget(enemyCharacter);
@@ -189,7 +232,6 @@ void BattleField::StartGame()
     //allPlayers->push_back(enemyCharacter);
     //AlocatePlayers();
     //StartTurn();
-
 }
 
 void BattleField::StartTurn()
@@ -219,7 +261,7 @@ void BattleField::HandleTurn()
         auto current = *it;
         if (!current->IsDead())
         {
-            current->StartTurn(grid.get());
+            current->StartTurn(this, grid.get(), allCharacters);
         }
     }
 
@@ -279,8 +321,8 @@ void BattleField::FinishedTurn()
     else
     {
         //wait for the player enter any key.
-        printf("Press any key to start the next turn...\n");
-        std::cin.get();
+        //printf("Press any key to start the next turn...\n");
+        system("pause");
 
         gameState = Types::GameState::MainGameLoop_StartTurn;
     }

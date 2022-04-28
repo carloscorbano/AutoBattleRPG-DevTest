@@ -1,28 +1,43 @@
 # Turn RPG system #
 
 > * Kokku Software Engineer Applicant Test
-> * Current Version: 1.0.3
+> * Current Version: 1.0.4
 
 ----
 
 ### TODO List: ###
 
-> * [x] This application is an auto-battle RPG, that has a "grid" with cells/tiles/boxes organized as a matrix.
-> * [x] This grid provides the length for the x and y-axis.
+> * [v] This application is an auto-battle RPG, that has a "grid" with cells/tiles/boxes organized as a matrix.
+> * [v] This grid provides the length for the x and y-axis.
 > * [x] There is also a Character with a Name, Health, BaseDamage, DamageMultiplier, current cell/box, target, and an Index.
-> * [x] Each team should have one move per turn (except when the move places the character in attack range of an opposing team character)
-> * [x] The game should work with a "battlefield" of any size, including a non-square matrix, for example 6x6 or 6x10 tiles in the grid.
+> * [v] Each team should have one move per turn (except when the move places the character in attack range of an opposing team character)
+> * [v] The game should work with a "battlefield" of any size, including a non-square matrix, for example 6x6 or 6x10 tiles in the grid.
 > * [x] Make sure all the variables in CHARACTER are engaged in a code feature.
 > * [x] The game should inform the player when the battle is over and which team has been declared victorious.
-> * [x] The battlefield should only be reprinted/redrawn if a player makes a move.
-> * [x] Each character should look for a possible target and attack it when this is viable and if not, move closer into attack range.
-> * [x] Each candidate must also implement one of the following extra features in the application, to be selected depending on their month of birth.
-> * [x] Characters cannot be on the same tile at the same time.
-> * [x] Extra based on birth month (August): The character can attack/walk in 8 directions;
+> * [v] The battlefield should only be reprinted/redrawn if a player makes a move.
+> * [v] Each character should look for a possible target and attack it when this is viable and if not, move closer into attack range.
+> * [v] Each candidate must also implement one of the following extra features in the application, to be selected depending on their month of birth.
+> * [v] Characters cannot be on the same tile at the same time.
+> * [v] Extra based on birth month (August): The character can attack/walk in 8 directions;
 
 ----
 
 ### Changelog: ###
+
+> version 1.0.4:
+
+> > * Removed Character logic from `BattleField.h` and placed it in `Character.h`.
+> > * Added to `Grid.h` two helper methods to get the index from lines and columns and another method to get the line and column from a given index.
+> > * Correction of how length was spelled in `Grid.h`, changed also the for loop variables (i to y and j to x).
+> > * Moved `DrawBattlefield()` from `Grid.h` to `BattleField.h`.
+> > * `Character.h` method `StartTurn()` now receives `BattleField` instead of `Grid`.
+> > * Changed `ocupied` variable from boolean to integer, it will now hold the index of a character (if is ocupied, if is not ocupied, then it will have -1 as value).
+> > * Changed method return type in `Character.h` from bool to void (`TakeDamage()`).
+> > * Added a random damageMultiplier in `Character.h`, it'll roll a random multiplier that is within the range of 0.01 to 1.00.
+> > * Changed `WalkTo()` in variable to `Grid*` in `Character.h`.
+> > * Created a Helper function in `Character.h` to calculate the distance.
+> > * Changed `CheckCloseTargets()` to `CheckTargetIsWithinAttackRange()` in `Character.h`.
+> > * Some of the requirements in the TODO list are completed.
 
 > version 1.0.3:
 

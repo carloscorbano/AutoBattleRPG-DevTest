@@ -13,13 +13,13 @@ public:
 
     std::vector<Types::GridBox> grids;
 
-    int xLenght;
+    int xLength;
     int yLength;
-    
-    // prints the matrix that indicates the tiles of the battlefield
-    void drawBattlefield(int Lines, int Columns);
 
+    int GetIndexFromColumnAndLine(int line, int column);
+    void GetColumnAndLineFromIndex(int index, int& line, int& column);
+    
     //Helper Method to Get a random position.
-    Types::GridBox& GetRandomAvailableGridBoxInQuad(int xMin, int yMin, int xMax, int yMax);
+    int GetRandomAvailableIndexInQuad(int xMin, int yMin, int xMax, int yMax);
 };
 

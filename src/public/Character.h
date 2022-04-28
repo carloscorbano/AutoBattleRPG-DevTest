@@ -11,32 +11,37 @@
 #define PLAYER_CHARACTER_ICON 'P'
 #define ENEMY_CHARACTER_ICON 'E'
 
+class BattleField;
+
 class Character
 {
 public:
 
-    Character(Types::CharacterClass characterClass, float health, float baseDamage, int index, char icon, int energy, Types::GridBox spawnLocation, Types::CharacterFlag flag);
+    Character(Types::CharacterClass characterClass, float health, float baseDamage, int index, char icon, int energy,
+        Types::GridBox spawnLocation, Types::CharacterFlag flag);
     ~Character();
 
-    void StartTurn(Grid* battlefield);
-    bool TakeDamage(float amount);
+    void StartTurn(BattleField* battlefield, Grid* grid, std::vector<std::shared_ptr<Character>> allCharacters);
+    void TakeDamage(float amount);
 
-    //TODO: ANALYSE THIS METHOD AND IT'S DEFINITION.
-    int GetIndex(std::vector<Types::GridBox*> v, int index);
+    int GetIndex() const;
+    char GetIcon() const;
     bool IsDead() const;
 
     std::bitset<FLAG_SIZE> GetFlag() const;
 
 private:
-    void WalkTo(bool CanWalk);
+    bool CheckTargetIsWithinAttackRange(Grid* grid);
 
-    bool CheckCloseTargets(Grid* battlefield);
+    void SelectTarget(std::vector<std::shared_ptr<Character>> allCharacters);
 
-    void Attack(Character* target);
+    void WalkTo(Grid* grid);
 
-    void SetTarget(Character* target);
+    void Attack();
 
     void Die();
+
+    float CalculateDistance(Types::GridBox a, Types::GridBox b);
 
 private:
     Types::CharacterClass characterClass;
@@ -47,6 +52,9 @@ private:
     Types::GridBox currentBox;
     int playerIndex;
     std::bitset<FLAG_SIZE> flag;
+
+    Character* target;
+    Types::CharacterTurnState state;
 
     bool isDead;
     char icon;

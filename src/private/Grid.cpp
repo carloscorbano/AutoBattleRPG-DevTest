@@ -2,15 +2,15 @@
 
 Grid::Grid(int Lines, int Columns)
 {
-    xLenght = Lines;
+    xLength = Lines;
     yLength = Columns;
-    //Console.WriteLine("The battle field has been created\n");
-    for (int i = 0; i < Lines; i++)
+
+    for (int y = 0, index = 0; y < Columns; y++)
     {
-        for (int j = 0; j < Columns; j++)
+        for (int x = 0; x < Lines; x++, index++)
         {
-            Types::GridBox* newBox = new Types::GridBox(i, j, false, (Columns * i + j));
-            //grids.insert(grids.end(), newBox);
+            Types::GridBox newBox(x, y, index);
+            grids.push_back(newBox);
             //Console.Write($"{newBox.Index}\n");
         }
     }
@@ -22,29 +22,53 @@ Grid::~Grid()
 
 }
 
-void Grid::drawBattlefield(int Lines, int Columns)
+int Grid::GetIndexFromColumnAndLine(int line, int column)
 {
-    //for (int i = 0; i < Lines; i++)
-    //{
-    //    for (int j = 0; j < Columns; j++)
-    //    {
-    //        Types::GridBox* currentgrid = new Types::GridBox();
-    //        if (currentgrid->ocupied)
-    //        {
-    //            //if()
-    //            printf("[X]\t");
-    //        }
-    //        else
-    //        {
-    //            printf("[ ]\t");
-    //        }
-    //    }
-    //    printf("\n");
-    //}
-    //printf("\n");
+    return xLength * column + line;
 }
 
-Types::GridBox& Grid::GetRandomAvailableGridBoxInQuad(int xMin, int yMin, int xMax, int yMax)
+void Grid::GetColumnAndLineFromIndex(int index, int& line, int& column)
 {
-    return grids[0];
+    line = index % xLength;
+    column = (index - line) / xLength;
+}
+
+//void Grid::DrawBattlefield()
+//{
+//    //for (int i = 0; i < Lines; i++)
+//    //{
+//    //    for (int j = 0; j < Columns; j++)
+//    //    {
+//    //        Types::GridBox* currentgrid = new Types::GridBox();
+//    //        if (currentgrid->ocupied)
+//    //        {
+//    //            //if()
+//    //            printf("[X]\t");
+//    //        }
+//    //        else
+//    //        {
+//    //            printf("[ ]\t");
+//    //        }
+//    //    }
+//    //    printf("\n");
+//    //}
+//    //printf("\n");
+//}
+
+int Grid::GetRandomAvailableIndexInQuad(int xMin, int yMin, int xMax, int yMax)
+{
+    int index, x, y;
+    while (true)
+    {
+        x = Helper::GetRandomIntFromRange(xMin, xMax);
+        y = Helper::GetRandomIntFromRange(yMin, yMax);
+        index = GetIndexFromColumnAndLine(x, y);
+
+        if (grids[index].ocupiedID == -1)
+        {
+            break;
+        }
+    }
+
+    return index;
 }

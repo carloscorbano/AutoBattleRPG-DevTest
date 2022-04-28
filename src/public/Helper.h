@@ -8,7 +8,8 @@ namespace Helper
 {
 	inline void ClearConsole()
 	{
-		std::cout << "\x1B[2J\x1B[H";
+		//std::cout << "\x1B[2J\x1B[H";
+        system("cls");
 	}
 
     inline int GetRandomIntFromRange(int min, int max)
@@ -78,9 +79,7 @@ namespace Helper
     {
         switch (state)
         {
-        case Types::CharacterTurnState::Checking:           return 0;
         case Types::CharacterTurnState::SelectingTarget:    return 0;
-        case Types::CharacterTurnState::CheckRange:         return 0;
         case Types::CharacterTurnState::Move:               return 1;
         case Types::CharacterTurnState::Attack:             return 1;
         default:                                            return 0;
@@ -94,7 +93,7 @@ namespace Helper
         case Types::CharacterClass::Paladin:    return 1;
         case Types::CharacterClass::Warrior:    return 1;
         case Types::CharacterClass::Cleric:     return 1;
-        case Types::CharacterClass::Archer:     return 4;
+        case Types::CharacterClass::Archer:     return 2;
         default:                                return 0;
         }
     }

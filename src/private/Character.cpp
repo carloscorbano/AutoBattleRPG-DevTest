@@ -1,53 +1,62 @@
 #include "../public/Character.h"
+#include "../public/BattleField.h"
+
+#include <cmath>
+#include <limits>
 
 Character::Character(Types::CharacterClass characterClass, float health, float baseDamage, int index, char icon, int energy,
     Types::GridBox spawnLocation, Types::CharacterFlag flag)
-    :   characterClass(characterClass), health(health), baseDamage(baseDamage), damageMultiplier(0), energy(energy), currentBox(spawnLocation),
-        playerIndex(index), isDead(false), icon(icon)
+    :   characterClass(characterClass), health(health), baseDamage(baseDamage), energy(energy), currentBox(spawnLocation),
+        playerIndex(index), isDead(false), icon(icon), target(nullptr), state(Types::CharacterTurnState::SelectingTarget)
 {
     this->flag.set(0, static_cast<int>(flag));
+    damageMultiplier = static_cast<float>(Helper::GetRandomIntFromRange(1, 100)) * 0.01f;
 }
 
 Character::~Character()
 {}
 
-void Character::StartTurn(Grid* battlefield)
+void Character::StartTurn(BattleField* battlefield, Grid* grid, std::vector<std::shared_ptr<Character>> allCharacters)
 {
     //if this character is dead, then just return.
     if (isDead) return;
 
     //Set the initial state of the machine.
-    Types::CharacterTurnState state = Types::CharacterTurnState::Checking;
+    state = Types::CharacterTurnState::SelectingTarget;
 
     int curEnergy = energy;
     //Character AI state machine.
+
     while (curEnergy > 0)
     {
         switch (state)
         {
-        case Types::CharacterTurnState::Checking:
-        {
-            curEnergy -= Helper::GetEnergyCostFromCharacterTurnState(state);
-        }
-            break;
         case Types::CharacterTurnState::SelectingTarget:
         {
-            curEnergy -= Helper::GetEnergyCostFromCharacterTurnState(state);
-        }
-            break;
-        case Types::CharacterTurnState::CheckRange:
-        {
-            curEnergy -= Helper::GetEnergyCostFromCharacterTurnState(state);
+            SelectTarget(allCharacters);
+            if (CheckTargetIsWithinAttackRange(grid))
+            {
+                state = Types::CharacterTurnState::Attack;
+            }
+            else
+            {
+                state = Types::CharacterTurnState::Move;
+            }
         }
             break;
         case Types::CharacterTurnState::Move:
         {
+            WalkTo(grid);
+            battlefield->DrawBattleField();
             curEnergy -= Helper::GetEnergyCostFromCharacterTurnState(state);
+            state = Types::CharacterTurnState::SelectingTarget;
         }
             break;
         case Types::CharacterTurnState::Attack:
         {
+            Attack();
             curEnergy -= Helper::GetEnergyCostFromCharacterTurnState(state);
+            state = Types::CharacterTurnState::SelectingTarget;
         }
             break;
         default:
@@ -124,20 +133,24 @@ void Character::StartTurn(Grid* battlefield)
     */
 }
 
-bool Character::TakeDamage(float amount) 
+void Character::TakeDamage(float amount) 
 {
-	if ((health -= baseDamage) <= 0)
+    health -= baseDamage;
+
+	if (health <= 0)
 	{
 		Die();
-		return true;
 	}
-	return false;
 }
 
-int Character::GetIndex(std::vector<Types::GridBox*> v, int index)
+int Character::GetIndex() const
 {
-    //return playerIndaex;
-    return 0;
+    return playerIndex;
+}
+
+char Character::GetIcon() const
+{
+    return icon;
 }
 
 bool Character::IsDead() const
@@ -150,25 +163,90 @@ std::bitset<FLAG_SIZE> Character::GetFlag() const
     return flag;
 }
 
-void Character::WalkTo(bool CanWalk) 
+bool Character::CheckTargetIsWithinAttackRange(Grid* grid)
 {
+    //Check if is within the attack range (8 directions)
+    int attackRange = Helper::GetCharacterAttackRangeFromClass(characterClass);
+    
+    int curX = currentBox.xIndex;
+    int curY = currentBox.yIndex;
 
+    int targetX = target->currentBox.xIndex;
+    int targetY = target->currentBox.yIndex;
+
+    return (targetX >= (curX - attackRange) && targetX <= (curX + attackRange) &&
+            targetY >= (curY - attackRange) && targetY <= (curY + attackRange));
 }
 
-bool Character::CheckCloseTargets(Grid* battlefield)
+void Character::SelectTarget(std::vector<std::shared_ptr<Character>> allCharacters)
 {
-    return false;
+    float closestDistance = INT_MAX;
+    Character* closestCharacter = nullptr;
+
+    //Check the nearest target
+    for (auto it = allCharacters.begin(); it != allCharacters.end(); ++it)
+    {
+        //Don't check itself, and don't aim for the same type and don't aim for dead targets
+        if (it->get() == this || ((*it)->GetFlag() == GetFlag()) || (*it)->IsDead()) continue;
+
+        //Calculate distance
+        float mDistance = CalculateDistance(currentBox, (*it)->currentBox);
+
+        if (closestDistance > mDistance)
+        {
+            closestDistance = mDistance;
+            closestCharacter = it->get();
+        }
+    }
+
+    target = closestCharacter;
 }
 
-void Character::Attack(Character* target) 
+void Character::WalkTo(Grid* grid)
 {
+    //find the fastest way to get to the target
+    int curX = currentBox.xIndex;
+    int curY = currentBox.yIndex;
 
+    float nearestDistance = INT_MAX;
+    int nextIndex = -1;
+
+    //Iterate with neightbours gridboxes.
+    for (int y = (curY - 1); y <= (curY + 1); ++y)
+    {
+        for (int x = (curX - 1); x <= (curX + 1); ++x)
+        {
+            //check if it is within the grid length and don't get the current grid.
+            if (x < 0 || y < 0 || x >= (grid->xLength) || y >= (grid->yLength) || x == curX || y == curY) continue;
+
+            //Get the cur box data.
+            int index = grid->GetIndexFromColumnAndLine(x, y);
+
+            //If the neightbour grid box is already beeing ocupied by another character.
+            if (grid->grids[index].ocupiedID != -1) continue;
+
+            float neightbourDistanceToTarget = CalculateDistance(grid->grids[index], target->currentBox);
+
+            if (nearestDistance > neightbourDistanceToTarget)
+            {
+                nearestDistance = neightbourDistanceToTarget;
+                nextIndex = index;
+            }
+        }
+    }
+
+    //Move
+    grid->grids[currentBox.Index].ocupiedID = -1;
+    grid->grids[nextIndex].ocupiedID = playerIndex;
+    currentBox = grid->grids[nextIndex];
 }
 
-void Character::SetTarget(Character* target)
+void Character::Attack() 
 {
     if (target != nullptr)
-        target = target;
+    {
+        target->TakeDamage(baseDamage + (baseDamage * damageMultiplier));
+    }
 }
 
 void Character::Die()
@@ -177,6 +255,19 @@ void Character::Die()
     isDead = true;
     // TODO >> kill
     //TODO >> end the game?
+}
+
+float Character::CalculateDistance(Types::GridBox a, Types::GridBox b)
+{
+    //Calculate distance
+    int otherX = b.xIndex;
+    int otherY = b.yIndex;
+
+    float deltaX = static_cast<float>(otherX) - static_cast<float>(a.xIndex);
+    float deltaY = static_cast<float>(otherY) - static_cast<float>(a.yIndex);
+
+    //Manhattan distance
+    return (fabs(deltaX) + fabs(deltaY));
 }
 
 

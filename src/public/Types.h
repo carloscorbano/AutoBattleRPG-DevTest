@@ -11,14 +11,14 @@ namespace Types
     {
         int xIndex;
         int yIndex;
-        bool ocupied;
+        int ocupiedID;
         int Index;
 
-        GridBox(int x, int y, bool isOcupied, int index)
+        GridBox(int x, int y, int index)
         {
             xIndex = x;
             yIndex = y;
-            ocupied = isOcupied;
+            ocupiedID = -1;
             Index = index;
         }
     };
@@ -50,9 +50,7 @@ namespace Types
 
     enum class CharacterTurnState
     {
-        Checking,
         SelectingTarget,
-        CheckRange,
         Move,
         Attack
     };
