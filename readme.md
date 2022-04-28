@@ -1,7 +1,7 @@
 # Turn RPG system #
 
 > * Kokku Software Engineer Applicant Test
-> * Current Version: 1.0.2
+> * Current Version: 1.0.3
 
 ----
 
@@ -23,6 +23,26 @@
 ----
 
 ### Changelog: ###
+
+> version 1.0.3:
+
+> > * Improved input handling in `BattleField.cpp` (`Setup()` and `GetPlayerChoice()`).
+> > * Created `Helper.h` to store helper methods.
+> > * Changed `Types.h` class Types to namespace Types.
+> > * Changed `Character.h` constructor to have all parameters to correct initialize class.
+> > * Added to `Helper.h` a method that returns the attack range of the given class.
+> > * Added energy to `Character.h` to control the state machine.
+> > * Added to `Helper.h` a method that returns the energy cost of the given state.
+> > * Added to `Helper.h` a method that returns the base status (health, damage and energy) of the given class.
+> > * Created the definition of CharacterClass range (MINIMAL and MAX IDs) in `Types.h`.
+> > * Fixed the grid creation, now it accepts the input data from player to create a custom grid size.
+> > * Fixed the random method and moved it to `Helper.h`.
+> > * Simplification of turn state (game state machine) in `Types.h` and `BattleField.h`.
+> > * Added to `BattleField.h` a `OnGameEnd()` to handle the game end.
+> > * Removed feature from version 1.0.2 that limits the size of the grid using 8 bits integers.
+> > * Added to `Grid.h` a method to get a random grid location based on a quad (`GetRandomAvailableGridBoxInQuad()`).
+> > * Changed in `BattleField.h` list to vector.
+
 
 > version 1.0.2:
 

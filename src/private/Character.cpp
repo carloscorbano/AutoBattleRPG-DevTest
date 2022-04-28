@@ -1,24 +1,60 @@
 #include "../public/Character.h"
 
-Character::Character(Types::CharacterClass characterClass)
+Character::Character(Types::CharacterClass characterClass, float health, float baseDamage, int index, char icon, int energy,
+    Types::GridBox spawnLocation, Types::CharacterFlag flag)
+    :   characterClass(characterClass), health(health), baseDamage(baseDamage), damageMultiplier(0), energy(energy), currentBox(spawnLocation),
+        playerIndex(index), isDead(false), icon(icon)
 {
-
+    this->flag.set(0, static_cast<int>(flag));
 }
 
-Character::~Character() 
-{
-
-}
-
-void Character::SetData(float health, float baseDamage, int index)
-{
-    health = health;
-    baseDamage = baseDamage;
-    playerIndex = index;
-}
+Character::~Character()
+{}
 
 void Character::StartTurn(Grid* battlefield)
 {
+    //if this character is dead, then just return.
+    if (isDead) return;
+
+    //Set the initial state of the machine.
+    Types::CharacterTurnState state = Types::CharacterTurnState::Checking;
+
+    int curEnergy = energy;
+    //Character AI state machine.
+    while (curEnergy > 0)
+    {
+        switch (state)
+        {
+        case Types::CharacterTurnState::Checking:
+        {
+            curEnergy -= Helper::GetEnergyCostFromCharacterTurnState(state);
+        }
+            break;
+        case Types::CharacterTurnState::SelectingTarget:
+        {
+            curEnergy -= Helper::GetEnergyCostFromCharacterTurnState(state);
+        }
+            break;
+        case Types::CharacterTurnState::CheckRange:
+        {
+            curEnergy -= Helper::GetEnergyCostFromCharacterTurnState(state);
+        }
+            break;
+        case Types::CharacterTurnState::Move:
+        {
+            curEnergy -= Helper::GetEnergyCostFromCharacterTurnState(state);
+        }
+            break;
+        case Types::CharacterTurnState::Attack:
+        {
+            curEnergy -= Helper::GetEnergyCostFromCharacterTurnState(state);
+        }
+            break;
+        default:
+            break;
+        }
+    }
+
     /* {
 
         if (CheckCloseTargets(battlefield))
@@ -109,6 +145,11 @@ bool Character::IsDead() const
     return isDead;
 }
 
+std::bitset<FLAG_SIZE> Character::GetFlag() const
+{
+    return flag;
+}
+
 void Character::WalkTo(bool CanWalk) 
 {
 
@@ -132,6 +173,8 @@ void Character::SetTarget(Character* target)
 
 void Character::Die()
 {
+    //Set dead state.
+    isDead = true;
     // TODO >> kill
     //TODO >> end the game?
 }

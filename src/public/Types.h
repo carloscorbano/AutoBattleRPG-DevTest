@@ -2,10 +2,11 @@
 
 #include <string>
 
-class Types
-{
-public:
+#define MINIMAL_CLASS_ID 1
+#define MAX_CLASS_ID 4
 
+namespace Types
+{
     struct GridBox
     {
         int xIndex;
@@ -22,6 +23,12 @@ public:
         }
     };
 
+    enum class CharacterFlag
+    {
+        Player,
+        Enemy
+    };
+
     enum class CharacterClass
     {
         Paladin = 1,
@@ -30,36 +37,24 @@ public:
         Archer = 4
     };
 
-    inline static std::string GetStringFromCharacterClass(CharacterClass classID)
-    {
-        switch (classID)
-        {
-        case Types::CharacterClass::Paladin: return "Paladin";
-        case Types::CharacterClass::Warrior: return "Warrior";
-        case Types::CharacterClass::Cleric: return "Cleric";
-        case Types::CharacterClass::Archer: return "Archer";
-        default: return "Invalid Class";
-        }
-    }
-
     enum class GameState
     {
         Setup,
         CreatingCharacters,
-        MainGameLoop_SelectingCharacter,
-        MainGameLoop_ResolvingCharacterTurn,
-        MainGameLoop_FinishedTurn,
-        MainGameLoop_CheckEndGame,
-        Cleanup,
+        StartGame,
+        MainGameLoop_StartTurn,
+        MainGameLoop_ResolvingTurn,
+        MainGameLoop_FinishedTurn,        
         GameEnded
     };
 
     enum class CharacterTurnState
     {
+        Checking,
         SelectingTarget,
         CheckRange,
         Move,
         Attack
     };
-};
+}
 

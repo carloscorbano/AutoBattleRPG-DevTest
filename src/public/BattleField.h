@@ -1,7 +1,6 @@
 #pragma 
 
 #include "Character.h"
-#include <list>
 
 #define MIN_GRID_X 4
 #define MIN_GRID_Y 4
@@ -15,8 +14,6 @@ public:
 	BattleField();
 	
 	void Initialize();
-
-	static void ClearConsole();
 
 private:
 
@@ -34,7 +31,7 @@ private:
 
 	void HandleTurn();
 
-	int GetRandomInt(int min, int max);
+	void FinishedTurn();
 
 	void AlocatePlayers();
 
@@ -42,12 +39,16 @@ private:
 
 	void AlocateEnemyCharacter();
 
+	void OnGameEnd();
+
 private:
-	std::unique_ptr<Grid> grid;
+	std::shared_ptr<Grid> grid;
 	Types::GameState gameState;
-	std::list<std::unique_ptr<Character>> allCharacters;
+	std::vector<std::shared_ptr<Character>> allCharacters;
 	int currentTurn;
 	int numberOfPossibleTiles;
+	int totalNumberOfPlayers;
+	int totalNumberOfEnemies;
 };
 
 

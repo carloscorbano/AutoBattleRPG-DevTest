@@ -43,3 +43,8 @@ void Grid::drawBattlefield(int Lines, int Columns)
     //}
     //printf("\n");
 }
+
+Types::GridBox& Grid::GetRandomAvailableGridBoxInQuad(int xMin, int yMin, int xMax, int yMax)
+{
+    return grids[0];
+}
