@@ -1,7 +1,7 @@
 # Turn RPG system #
 
 > * Kokku Software Engineer Applicant Test
-> * Current Version: 1.1.0
+> * Current Version: 1.1.1
 
 ----
 
@@ -23,6 +23,14 @@
 ----
 
 ### Changelog: ###
+
+> version 1.1.1:
+
+> > * Changed `GetAllBoxesAroundGridBoxQuadSearch()` and `GetAllBoxesAroundGridBoxCircleSearch()` to accept the return of the centre box as well.
+> > * Added a wait for seconds in the AI state machine, to delay it (it was too fast before).
+> > * Added to `Character.h` a `DecideAction()` and to the enum as well `CharacterTurnState::DecidingAction`.
+> > * Creation of the `Console` class (starting to work on the UI).
+> > * Changed `DrawBattleField()` to `UpdateBattleField()` in `BattleField.h`.
 
 > version 1.1.0:
 

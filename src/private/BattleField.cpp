@@ -51,7 +51,7 @@ void BattleField::Initialize()
         {
             StartGame();
             SpawnCharacters();
-            DrawBattleField();
+            UpdateBattleField();
             gameState = Types::GameState::MainGameLoop_StartTurn;
         }
             break;
@@ -88,7 +88,7 @@ void BattleField::Initialize()
     OnGameEnd();
 }
 
-void BattleField::DrawBattleField()
+void BattleField::UpdateBattleField()
 {
     Helper::ClearConsole();
     
@@ -286,7 +286,7 @@ void BattleField::SpawnCharacters()
             Types::GridBox& gb = grid->GetRandomAvailableGridInQuad(0, 0, grid->xLength - 1, grid->yLength - 1);
 
             //Check if there is not a character already spawned nearby
-            size_t numberOfCharactersInRadius = grid->GetAllBoxesAroundGridBoxCircleSearch(gb.xIndex, gb.yIndex, SPAWN_CHARACTER_CHECK_RADIUS, SEARCH_MASK_ONLY_OCCUPIED_BOXES).size();
+            size_t numberOfCharactersInRadius = grid->GetAllBoxesAroundGridBoxCircleSearch(gb.xIndex, gb.yIndex, SPAWN_CHARACTER_CHECK_RADIUS, false, SEARCH_MASK_ONLY_OCCUPIED_BOXES).size();
 
             if (numberOfCharactersInRadius == 0)
             {

@@ -55,7 +55,7 @@ Types::GridBox& Grid::GetRandomAvailableGridInQuad(int xMin, int yMin, int xMax,
     return grids[index];
 }
 
-std::vector<Types::GridBox*> Grid::GetAllBoxesAroundGridBoxQuadSearch(int centreX, int centreY, int quadSize, int mask)
+std::vector<Types::GridBox*> Grid::GetAllBoxesAroundGridBoxQuadSearch(int centreX, int centreY, int quadSize, bool includeCentreBox, int mask)
 {
     if (quadSize <= 0 || centreX < 0 || centreX >= xLength || centreY < 0 || centreY >= yLength) return std::vector<Types::GridBox*>();
 
@@ -67,7 +67,7 @@ std::vector<Types::GridBox*> Grid::GetAllBoxesAroundGridBoxQuadSearch(int centre
         {
             int index = GetIndexFromColumnAndLine(x, y);
             //Check if is outside of grid or it's itself
-            if (x < 0 || y < 0 || x >= (xLength) || (y >= yLength) || (x == centreX && y == centreY) || index < 0 || index >= grids.size() ||
+            if (x < 0 || y < 0 || x >= (xLength) || (y >= yLength) || (!includeCentreBox && x == centreX && y == centreY) || index < 0 || index >= grids.size() ||
                 (((mask & SEARCH_MASK_ONLY_OCCUPIED_BOXES) == SEARCH_MASK_ONLY_OCCUPIED_BOXES) && grids[index].occupiedID == EMPTY_GRID) ||
                 (((mask & SEARCH_MASK_ONLY_UNOCCUPIED_BOXES) == SEARCH_MASK_ONLY_UNOCCUPIED_BOXES) && grids[index].occupiedID != EMPTY_GRID)
                 ) continue;
@@ -80,7 +80,7 @@ std::vector<Types::GridBox*> Grid::GetAllBoxesAroundGridBoxQuadSearch(int centre
     return boxes;
 }
 
-std::vector<Types::GridBox*> Grid::GetAllBoxesAroundGridBoxCircleSearch(int centreX, int centreY, int radius, int mask)
+std::vector<Types::GridBox*> Grid::GetAllBoxesAroundGridBoxCircleSearch(int centreX, int centreY, int radius, bool includeCentreBox, int mask)
 {
     if (radius <= 0 || centreX < 0 || centreX >= xLength || centreY < 0 || centreY >= yLength) return std::vector<Types::GridBox*>();
 
@@ -93,7 +93,7 @@ std::vector<Types::GridBox*> Grid::GetAllBoxesAroundGridBoxCircleSearch(int cent
             int index = GetIndexFromColumnAndLine(x, y);
 
             //Check if is outside of grid or it's itself
-            if (x < 0 || y < 0 || x >= xLength || y >= yLength || (x == centreX && y == centreY) || index < 0 || index >= grids.size() ||
+            if (x < 0 || y < 0 || x >= xLength || y >= yLength || (!includeCentreBox && x == centreX && y == centreY) || index < 0 || index >= grids.size() ||
                 (((mask & SEARCH_MASK_ONLY_OCCUPIED_BOXES) == SEARCH_MASK_ONLY_OCCUPIED_BOXES) && grids[index].occupiedID == EMPTY_GRID) ||
                 (((mask & SEARCH_MASK_ONLY_UNOCCUPIED_BOXES) == SEARCH_MASK_ONLY_UNOCCUPIED_BOXES) && grids[index].occupiedID != EMPTY_GRID) ||
                 (Helper::CalculateManhattanDist(x, y, centreX, centreY) > radius)

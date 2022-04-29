@@ -17,6 +17,7 @@ public:
     void SetGridBox(Types::GridBox* box);
 private:
 
+    void DecideAction(int& movements_left, int& attacks_left, int& curEnergy, Grid& grid);
     bool CheckTargetIsWithinAttackRange(Grid* grid);
     void SelectTarget(std::vector<std::shared_ptr<Character>> allCharacters);
     void WalkTo(Grid* grid);

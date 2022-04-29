@@ -17,6 +17,11 @@
 #define FLAG_PLAYER 0
 #define FLAG_ENEMY 1
 
+//how many times character can move in each turn (0 = limited only by the energy).
+#define MAX_CHARACTER_MOVEMENTS_IN_EACH_TURN 1
+//how many times character can attack in each turn (0 = limited only by the energy).
+#define MAX_CHARACTER_ATTACKS_IN_EACH_TURN 1
+
 //the radius to be checked while trying to spawn the character, to make sure that it's not random spawned nearby others.
 #define SPAWN_CHARACTER_CHECK_RADIUS 5
 

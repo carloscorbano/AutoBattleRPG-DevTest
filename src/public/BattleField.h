@@ -10,7 +10,7 @@ public:
 	~BattleField();
 
 	void Initialize();
-	void DrawBattleField();
+	void UpdateBattleField();
 
 private:
 

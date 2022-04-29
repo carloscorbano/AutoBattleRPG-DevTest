@@ -17,52 +17,52 @@ void Character::StartTurn(BattleField* battlefield, Grid* grid, std::vector<std:
     if (info.isDead) return;
 
     //Set the initial state of the machine.
-    state = Types::CharacterTurnState::SelectingTarget;
+    state = Types::CharacterTurnState::DecidingAction;
 
     int curEnergy = info.energy;
-    int moveEnergyCost = Helper::GetEnergyCostFromCharacterTurnState(Types::CharacterTurnState::Move);
-    int attackEnergyCost = Helper::GetEnergyCostFromCharacterTurnState(Types::CharacterTurnState::Attack);
+    int movements_left = MAX_CHARACTER_MOVEMENTS_IN_EACH_TURN;
+    int attacks_left = MAX_CHARACTER_ATTACKS_IN_EACH_TURN;
     //Character AI state machine.
 
     while (curEnergy > 0)
     {
         switch (state)
         {
+        case Types::CharacterTurnState::DecidingAction:
+        {
+            DecideAction(movements_left, attacks_left, curEnergy, *grid);
+        }
+            break;
         case Types::CharacterTurnState::SelectingTarget:
         {
-            if (target == nullptr || target->info.isDead)
+            SelectTarget(allCharacters);
+
+            if (target == nullptr)
             {
-                SelectTarget(allCharacters);
+                curEnergy = 0;
+                return;
             }
 
-            if (CheckTargetIsWithinAttackRange(grid) && curEnergy - attackEnergyCost >= 0)
-            {
-                state = Types::CharacterTurnState::Attack;
-            }
-            else if(curEnergy - moveEnergyCost >= 0)
-            {
-                state = Types::CharacterTurnState::Move;
-            }
-            else
-            {
-                //to break the loop.
-                curEnergy = 0;
-            }
+            state = Types::CharacterTurnState::DecidingAction;
         }
             break;
         case Types::CharacterTurnState::Move:
         {
             WalkTo(grid);
-            battlefield->DrawBattleField();
+            battlefield->UpdateBattleField();
+            movements_left--;
             curEnergy -= Helper::GetEnergyCostFromCharacterTurnState(state);
-            state = Types::CharacterTurnState::SelectingTarget;
+            state = Types::CharacterTurnState::DecidingAction;
+            Helper::WaitForMilliseconds(250);
         }
             break;
         case Types::CharacterTurnState::Attack:
         {
             Attack();
+            attacks_left--;
             curEnergy -= Helper::GetEnergyCostFromCharacterTurnState(state);
-            state = Types::CharacterTurnState::SelectingTarget;
+            state = Types::CharacterTurnState::DecidingAction;
+            Helper::WaitForMilliseconds(250);
         }
             break;
         default:
@@ -97,6 +97,74 @@ void Character::SetGridBox(Types::GridBox* box)
     //Set the new data.
     currentBox = box;
     currentBox->occupiedID = info.playerIndex;
+}
+
+void Character::DecideAction(int& movements_left, int& attacks_left, int& curEnergy, Grid& grid)
+{
+    //Check if the player needs a new target.
+    if (target == nullptr || target->info.isDead)
+    {
+        state = Types::CharacterTurnState::SelectingTarget;
+        return;
+    }
+
+    //Get the cost of actions.
+    int moveEnergyCost = Helper::GetEnergyCostFromCharacterTurnState(Types::CharacterTurnState::Move);
+    int attackEnergyCost = Helper::GetEnergyCostFromCharacterTurnState(Types::CharacterTurnState::Attack);
+
+    bool targetIsInRange = CheckTargetIsWithinAttackRange(&grid);
+
+    //Check if the player can attack (priority to attack over movement)
+    switch (MAX_CHARACTER_ATTACKS_IN_EACH_TURN)
+    {
+    case 0: //0 means that is not limited by the attacks left, just limited by the energy.
+    {
+        if (targetIsInRange && curEnergy - attackEnergyCost >= 0)
+        {
+            state = Types::CharacterTurnState::Attack;
+            return;
+        }
+    }
+        break;
+    case 1: //is limited by attacks left.
+    {
+        if (targetIsInRange && attacks_left > 0)
+        {
+            state = Types::CharacterTurnState::Attack;
+            return;
+        }
+    }
+        break;
+    default:
+        break;
+    }
+
+    switch (MAX_CHARACTER_MOVEMENTS_IN_EACH_TURN)
+    {
+    case 0: //0 means that is not limited by the movements left, just limited by the energy.
+    {
+        if (!targetIsInRange && curEnergy - moveEnergyCost >= 0)
+        {
+            state = Types::CharacterTurnState::Move;
+            return;
+        }
+    }
+        break;
+    case 1: //is limited by movements left.
+    {
+        if (!targetIsInRange && movements_left > 0)
+        {
+            state = Types::CharacterTurnState::Move;
+            return;
+        }
+    }
+        break;
+    default:
+        break;
+    }
+
+    //if there is any action to do (all of above) then just exit turn.
+    curEnergy = 0;
 }
 
 bool Character::CheckTargetIsWithinAttackRange(Grid* grid)
@@ -149,7 +217,7 @@ void Character::WalkTo(Grid* grid)
 {
     if (target == nullptr) return;
 
-    std::vector<Types::GridBox*> boxesAround = grid->GetAllBoxesAroundGridBoxQuadSearch(currentBox->xIndex, currentBox->yIndex, 1, SEARCH_MASK_ONLY_UNOCCUPIED_BOXES);
+    std::vector<Types::GridBox*> boxesAround = grid->GetAllBoxesAroundGridBoxQuadSearch(currentBox->xIndex, currentBox->yIndex, 1, false, SEARCH_MASK_ONLY_UNOCCUPIED_BOXES);
 
     if (boxesAround.size() == 0)
     {
@@ -179,7 +247,6 @@ void Character::WalkTo(Grid* grid)
 void Character::Attack() 
 {
     if (target == nullptr) return;
-
     target->TakeDamage(info.baseDamage + (info.baseDamage * info.damageMultiplier));
 }
 

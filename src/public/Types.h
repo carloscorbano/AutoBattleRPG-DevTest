@@ -50,6 +50,7 @@ namespace Types
 
     enum class CharacterTurnState
     {
+        DecidingAction,
         SelectingTarget,
         Move,
         Attack

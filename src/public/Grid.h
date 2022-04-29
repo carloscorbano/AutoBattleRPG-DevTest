@@ -15,8 +15,8 @@ public:
     
     //Helper Method to Get a random position.
     Types::GridBox& GetRandomAvailableGridInQuad(int xMin, int yMin, int xMax, int yMax);
-    std::vector<Types::GridBox*> GetAllBoxesAroundGridBoxQuadSearch(int centreX, int centreY, int quadSize, int mask = SEARCH_MASK_ALL_BOXES);
-    std::vector<Types::GridBox*> GetAllBoxesAroundGridBoxCircleSearch(int centreX, int centreY, int radius, int mask = SEARCH_MASK_ALL_BOXES);
+    std::vector<Types::GridBox*> GetAllBoxesAroundGridBoxQuadSearch(int centreX, int centreY, int quadSize, bool includeCentreBox, int mask);
+    std::vector<Types::GridBox*> GetAllBoxesAroundGridBoxCircleSearch(int centreX, int centreY, int radius, bool includeCentreBox, int mask);
 
     std::vector<Types::GridBox> grids;
     int xLength;
