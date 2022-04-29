@@ -1,26 +1,24 @@
 #pragma once
 
+#include "Defs.h"
 #include <string>
 #include <vector>
-
-#define MINIMAL_CLASS_ID 1
-#define MAX_CLASS_ID 4
+#include <bitset>
 
 namespace Types
 {
-
     struct GridBox
     {
         int xIndex;
         int yIndex;
-        int ocupiedID;
+        int occupiedID;
         int Index;
 
         GridBox(int x, int y, int index)
         {
             xIndex = x;
             yIndex = y;
-            ocupiedID = -1;
+            occupiedID = EMPTY_GRID;
             Index = index;
         }
     };
@@ -55,6 +53,20 @@ namespace Types
         SelectingTarget,
         Move,
         Attack
+    };
+
+    struct CharacterInfo
+    {
+        Types::CharacterClass characterClass;
+        std::string name;
+        std::bitset<FLAG_SIZE> flag;
+        float health;
+        float baseDamage;
+        float damageMultiplier;
+        int energy;
+        int playerIndex;
+        bool isDead;
+        char icon;
     };
 }
 

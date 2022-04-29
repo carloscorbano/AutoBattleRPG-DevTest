@@ -156,6 +156,7 @@
   <ItemGroup>
     <ClInclude Include="src\public\BattleField.h" />
     <ClInclude Include="src\public\Character.h" />
+    <ClInclude Include="src\public\Defs.h" />
     <ClInclude Include="src\public\Grid.h" />
     <ClInclude Include="src\public\Helper.h" />
     <ClInclude Include="src\public\Types.h" />

@@ -1,7 +1,7 @@
 # Turn RPG system #
 
 > * Kokku Software Engineer Applicant Test
-> * Current Version: 1.0.5
+> * Current Version: 1.1.0
 
 ----
 
@@ -23,6 +23,24 @@
 ----
 
 ### Changelog: ###
+
+> version 1.1.0:
+
+> > * Creation of struct `CharacterInfo` in `Types.h` to better code organization, adapted `Character.h` to receive this new struct.
+> > * Created `Defs.h` to hold all the definitions in one place.
+> > * Changed `Character.h` constructor to accept the new struct.
+> > * Created `SpawnCharacters()` in `BattleField.h`.
+> > * Removed all getters and setters from `Character.h`.
+> > * Added one getter to `Character.h` to retrieve `CharacterInfo`.
+> > * Changed method of character creation, now splited into two sections (one is to create the character information and object, the second is to spawn the character).
+> > * Changed the return type from `int` to `Types::GridBox` and renamed the method from `GetRandomAvailableIndexInQuad()` to `GetRandomAvailableGridInQuad()` in `Grid.h`.
+> > * Moved GameEnd handling logic to inside of `OnGameEnd()` in `BattleField.h`.
+> > * Added `GetAllBoxesAroundGridBoxQuadSearch()` and `GetAllBoxesAroundGridBoxCircleSearch()` to `Grid.h` (a helper function to fast check for objects).
+> > * Moved `CalculateDistance()` from `Character.h` to `Helper.h` and renamed to `CalculateDistManhattan()`.
+> > * Correction of how `ocupied` was spelled to `occupied`. 
+> > * Added a safeguard code to prevent out of index search in `Grid.h`
+> > * Added two helper methods to `BattleField.h` to read input from user.
+> > * Correction of the text that was printed to the user, now it's easier to read.
 
 > version 1.0.5:
 

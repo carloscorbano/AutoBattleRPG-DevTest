@@ -31,20 +31,27 @@ void BattleField::Initialize()
         case Types::GameState::Setup:
         {
             Setup();
+            Helper::WaitForMilliseconds(1000);
             gameState = Types::GameState::CreatingCharacters;
         }
             break;
         case Types::GameState::CreatingCharacters:
         {
             int choice = GetPlayerChoice();
+            Helper::WaitForMilliseconds(1500);
             CreatePlayerCharacter(choice);
             CreateEnemyCharacter();
+
+            printf("Starting the game...\n");
+            Helper::WaitForMilliseconds(5000);
             gameState = Types::GameState::StartGame;
         }
             break;
         case Types::GameState::StartGame:
         {
             StartGame();
+            SpawnCharacters();
+            DrawBattleField();
             gameState = Types::GameState::MainGameLoop_StartTurn;
         }
             break;
@@ -69,8 +76,7 @@ void BattleField::Initialize()
             ///----------- MAIN GAME LOOP AREA END
         case Types::GameState::GameEnded:
         {
-            isRunning = false;
-            OnGameEnd();
+            isRunning = false;            
         }
             break;
         default:
@@ -78,24 +84,319 @@ void BattleField::Initialize()
         }
     }
 
-    int input = 0;
+    //Handles Game ending
+    OnGameEnd();
+}
+
+void BattleField::DrawBattleField()
+{
+    Helper::ClearConsole();
+    
+    for (std::vector<Types::GridBox>::iterator it = grid->grids.begin(); it != grid->grids.end(); ++it)
+    {
+        Types::GridBox current = *it;
+        
+        if ((current.xIndex % grid->xLength) == 0 && current.Index != 0)
+        {
+            printf("\n");
+        }
+
+        if (current.occupiedID == EMPTY_GRID)
+        {
+            printf("[ ]");
+        }
+        else
+        {
+            printf("[%c]", allCharacters[current.occupiedID]->GetCharacterInfo().icon);
+        }
+    }
+
+    printf("\n");
+}
+
+void BattleField::Setup()
+{    
+    int x, y;
+    x = y = -1;
+    printf("> Choose a grid size, the limit for x is min: %i max: %i and y is min: %i max: %i.\n", MIN_GRID_X, MAX_GRID_X, MIN_GRID_Y, MAX_GRID_Y);
+    printf("> For random values, just submit the field as blank field.\n");
     while (true)
     {
-        //asks if the player wanna play again
-        printf("What do you wanna do? [0] play again or [1] quit.\n");
+        x = ReadConsoleInt("X: ");
 
-        //store the player choice in a variable
-        std::string choice;
+        if (x == -1)
+        {
+            x = Helper::GetRandomIntFromRange(MIN_GRID_X, MAX_GRID_X);
+            break;
+        }
 
-        std::getline(std::cin, choice);
-        std::stringstream ss(choice);
-        //check input data
-        if (ss >> input)
+        if (x >= MIN_GRID_X && x <= MAX_GRID_X)
         {
             break;
         }
 
-        printf("Error, your choice was invalid, please enter the correct number.\n");
+        printf("[ERROR] Invalid value inserted for X. Please insert a valid value.\n");
+    }
+    
+    while (true)
+    {
+        y = ReadConsoleInt("Y: ");
+
+        if (y == -1)
+        {
+            y = Helper::GetRandomIntFromRange(MIN_GRID_Y, MAX_GRID_Y);
+            break;
+        }
+
+        if (y >= MIN_GRID_Y && y <= MAX_GRID_Y)
+        {
+            break;
+        }
+
+        printf("[ERROR] Invalid value inserted for Y. Please insert a valid value.\n");
+    }
+
+    //reset variables.
+    currentTurn = 0;
+    totalNumberOfEnemies = totalNumberOfPlayers = 0;
+
+    //Create Grid with the given x and y values.
+    grid = std::make_shared<Grid>(x, y);
+    printf("> Grid size defined to: [%i, %i]\n", x, y);
+    printf("\n");
+    numberOfPossibleTiles = static_cast<int>(grid->grids.size());
+}
+
+int BattleField::GetPlayerChoice()
+{
+    //asks for the player to choose between for possible classes via console.
+    printf("> Choose Between One of this Classes:\n");
+    printf("> [1] Paladin, [2] Warrior, [3] Cleric, [4] Archer\n");
+    printf("> Leave empty for a random class.\n");
+    int classID = 0;
+
+    //store the selected class.
+    while (true)
+    {
+         classID = ReadConsoleInt("Class number: ");
+
+         if (classID == -1)
+         {
+             classID = Helper::GetRandomIntFromRange(MINIMAL_CLASS_ID, MAX_CLASS_ID);
+             break;
+         }
+
+         if (classID >= MINIMAL_CLASS_ID && classID <= MAX_CLASS_ID)
+         {
+             break;
+         }
+
+         printf("[ERROR] Your choice was invalid, please enter the correct number.\n");
+    }
+
+    printf("> You are an almight %s!\n", Helper::GetStringFromCharacterClass(static_cast<Types::CharacterClass>(classID)).c_str());
+    printf("\n");
+
+    return classID;
+}
+
+void BattleField::CreatePlayerCharacter(int classIndex)
+{
+    printf("> What's the name of the character? (Leave empty for random name).\n");
+    std::string name = ReadConsoleString("Name: ");
+
+    if (name.empty())
+    {
+        name = Helper::GetRandomName();
+    }
+    
+    printf("> The character name is: %s\n", name.c_str());
+    printf("\n");
+
+    //Get the character class
+    Types::CharacterClass characterClass = static_cast<Types::CharacterClass>(classIndex);
+    printf(">> Player Class Choice: %s\n", Helper::GetStringFromCharacterClass(characterClass).c_str());
+    //get character status based on the class
+    float health, baseDamage;
+    int energy;
+    Helper::BaseStatusFromCharacterClass(characterClass, health, baseDamage, energy);
+
+    Types::CharacterInfo info{};
+
+    info.name = name;
+    info.health = health;
+    info.baseDamage = baseDamage;
+    info.energy = energy;
+    info.flag.set(FLAG_OFFSET, FLAG_PLAYER);
+    info.icon = PLAYER_CHARACTER_ICON;
+    info.isDead = false;
+    info.characterClass = characterClass;
+    info.damageMultiplier = static_cast<float>(Helper::GetRandomIntFromRange(10, 100)) * 0.001f;
+
+    allCharacters.push_back(std::make_shared<Character>(info));
+    
+    //Increase total players
+    totalNumberOfPlayers++;
+}
+
+void BattleField::CreateEnemyCharacter()
+{
+    //randomly choose the enemy class and set up vital variables
+    int randomInteger = Helper::GetRandomIntFromRange(MINIMAL_CLASS_ID, MAX_CLASS_ID);
+    Types::CharacterClass enemyClass = (Types::CharacterClass)randomInteger;
+    
+    //Get status based on the class.
+    float health, baseDamage;
+    int energy;
+    Helper::BaseStatusFromCharacterClass(enemyClass, health, baseDamage, energy);
+
+    Types::CharacterInfo info{};
+
+    info.name = Helper::GetRandomName();
+    info.health = health;
+    info.baseDamage = baseDamage;
+    info.energy = energy;
+    info.flag.set(FLAG_OFFSET, FLAG_ENEMY);
+    info.icon = ENEMY_CHARACTER_ICON;
+    info.isDead = false;
+    info.characterClass = enemyClass;
+    info.damageMultiplier = static_cast<float>(Helper::GetRandomIntFromRange(10, 100)) * 0.001f;
+
+    allCharacters.push_back(std::make_shared<Character>(info));
+
+    printf(">> Enemy Name: %s\n", info.name.c_str());
+    printf(">> Enemy Class Choice: %s\n", Helper::GetStringFromCharacterClass(enemyClass).c_str());
+    printf("\n");
+
+    //increase total enemies
+    totalNumberOfEnemies++;
+}
+
+void BattleField::SpawnCharacters()
+{
+    int index = 0;
+    for (std::vector<std::shared_ptr<Character>>::iterator it = allCharacters.begin(); it != allCharacters.end(); ++it, ++index)
+    {
+        std::shared_ptr<Character> currentCharacter = *it;
+        currentCharacter->GetCharacterInfo().playerIndex = index;
+
+        while (true)
+        {
+            //Look for a place to spawn character that is not ocupied and 
+            Types::GridBox& gb = grid->GetRandomAvailableGridInQuad(0, 0, grid->xLength - 1, grid->yLength - 1);
+
+            //Check if there is not a character already spawned nearby
+            size_t numberOfCharactersInRadius = grid->GetAllBoxesAroundGridBoxCircleSearch(gb.xIndex, gb.yIndex, SPAWN_CHARACTER_CHECK_RADIUS, SEARCH_MASK_ONLY_OCCUPIED_BOXES).size();
+
+            if (numberOfCharactersInRadius == 0)
+            {
+                //spawn the character there
+                currentCharacter->SetGridBox(&gb);
+                break;
+            }
+            //If contains characters nearby, then try again.
+        }
+    }
+}
+
+void BattleField::StartGame()
+{
+    //shuffle character list to make a random pickup
+    std::random_device rd;
+    std::mt19937 generator(rd());
+    std::shuffle(allCharacters.begin(), allCharacters.end(), generator);
+}
+
+void BattleField::StartTurn()
+{
+    //Increase turn.
+    currentTurn++;
+}
+
+void BattleField::HandleTurn()
+{
+    for (std::vector<std::shared_ptr<Character>>::iterator it = allCharacters.begin(); it != allCharacters.end(); ++it)
+    {
+        std::shared_ptr<Character> current = *it;
+        if (!current->GetCharacterInfo().isDead)
+        {
+            current->StartTurn(this, grid.get(), allCharacters);
+        }
+    }
+}
+
+void BattleField::FinishedTurn()
+{
+    //update count number
+    int playerCount = totalNumberOfPlayers;
+    int enemyCount = totalNumberOfEnemies;
+
+    for (std::vector<std::shared_ptr<Character>>::iterator it = allCharacters.begin(); it != allCharacters.end(); ++it)
+    {
+        std::shared_ptr<Character> current = *it;
+        if (current->GetCharacterInfo().isDead)
+        {
+            //0 == PLAYER, 1 == ENEMY
+            if (current->GetCharacterInfo().flag.test(0))
+            {
+                enemyCount--;
+            }
+            else
+            {
+                playerCount--;
+            }
+        }
+    }
+
+    if (playerCount == 0 || enemyCount == 0)
+    {
+        //Set the winner flag.
+        if (playerCount > 0)
+        {
+            winnerFlag.set(FLAG_OFFSET, FLAG_PLAYER);
+        }
+        else
+        {
+            winnerFlag.set(FLAG_OFFSET, FLAG_ENEMY);
+        }
+
+        gameState = Types::GameState::GameEnded;
+    }
+    else
+    {
+        Helper::WaitForMilliseconds(500);
+        gameState = Types::GameState::MainGameLoop_StartTurn;
+    }
+}
+
+void BattleField::OnGameEnd()
+{
+    printf(">> Game ended!!!\n");
+    //Present the victorious character
+    if (winnerFlag.test(0))
+    {
+        printf("> The enemies won this game! Yay?\n");
+    }
+    else
+    {
+        printf("> The player won this game! Yay!\n");
+    }
+
+    int input = 0;
+
+    //asks if the player wanna play again
+    printf("> What do you wanna do? [0] play again or [1] quit.\n");
+
+    while (true)
+    {
+        input = ReadConsoleInt("Choice: ");
+        
+        if (input == 0 || input == 1)
+        {
+            break;
+        }
+
+        printf("[ERROR] Your choice was invalid, please enter the correct number.\n");
     }
 
     if (input == 0)
@@ -118,262 +419,41 @@ void BattleField::Initialize()
     }
 }
 
-void BattleField::DrawBattleField()
+int BattleField::ReadConsoleInt(std::string consoleMessage)
 {
-    Helper::ClearConsole();
-    
-    for (std::vector<Types::GridBox>::iterator it = grid->grids.begin(); it != grid->grids.end(); ++it)
+    //asks if the player wanna play again
+    printf("%s", consoleMessage.c_str());
+    //store the player choice in a variable
+    std::string choice;
+    int val;
+    std::getline(std::cin, choice);
+
+    if (!choice.empty())
     {
-        Types::GridBox current = *it;
-        
-        if ((current.xIndex % grid->xLength) == 0 && current.Index != 0)
-        {
-            printf("\n");
-        }
-
-        if (current.ocupiedID == -1)
-        {
-            printf("[ ]");
-        }
-        else
-        {
-            printf("[%c]", allCharacters[current.ocupiedID]->GetIcon());
-        }
-    }
-
-    printf("\n");
-}
-
-void BattleField::Setup()
-{    
-    int x, y;
-
-    while (true)
-    {
-        //asks for the player to choose the grid size
-        printf("Choose a grid size, the limit for x is min: %i max: %i and y is min: %i max: %i. Example: x y\n", MIN_GRID_X, MAX_GRID_X, MIN_GRID_Y, MAX_GRID_Y);
-        printf("If you want random sizes, just leave this empty.\n");
-        std::string line;
-
-        //read line
-        std::getline(std::cin, line);
-
-        if (line.empty())
-        {
-            x = Helper::GetRandomIntFromRange(MIN_GRID_X, MAX_GRID_X);
-            y = Helper::GetRandomIntFromRange(MIN_GRID_Y, MAX_GRID_Y);
-
-            break;
-        }
-
-        std::stringstream ss(line);
-        if (ss >> x && ss >> y &&
-            (x >= MIN_GRID_X && x <= MAX_GRID_X && y >= MIN_GRID_Y && y <= MAX_GRID_Y))
-        {
-            break;
-        }
-
-        printf("Invalid data, please follow the example format.\n");
-    }
-
-    //reset variables.
-    currentTurn = 0;
-    totalNumberOfEnemies = totalNumberOfPlayers = 0;
-
-    //Create Grid with the given x and y values.
-    grid = std::make_shared<Grid>(x, y);
-    printf("Grid size defined to: [%i, %i]\n", x, y);
-    numberOfPossibleTiles = static_cast<int>(grid->grids.size());
-}
-
-int BattleField::GetPlayerChoice()
-{
-    //store the selected class.
-    int classID = 0;
-    while (true)
-    {
-        //asks for the player to choose between for possible classes via console.
-        printf("Choose Between One of this Classes:\n");
-        printf("[1] Paladin, [2] Warrior, [3] Cleric, [4] Archer\n");
-        printf("Leave empty for a random class.\n");
-
-        //store the player choice in a variable
-        std::string choice;
-
-        std::getline(std::cin, choice);
-
-        if (choice.empty())
-        {
-            classID = Helper::GetRandomIntFromRange(MINIMAL_CLASS_ID, MAX_CLASS_ID);
-            break;
-        }
-
         std::stringstream ss(choice);
-        //check input data
-        if (ss >> classID &&
-            (classID >= MINIMAL_CLASS_ID && classID <= MAX_CLASS_ID))
+        if (ss >> val)
         {
-            break;
+            return val;
         }
 
-        printf("Error, your choice was invalid, please enter the correct number.\n");
+        return -2;
     }
 
-    printf("You are an almight %s!\n", Helper::GetStringFromCharacterClass(static_cast<Types::CharacterClass>(classID)).c_str());
-
-    return classID;
+    return -1;
 }
 
-void BattleField::CreatePlayerCharacter(int classIndex)
+std::string BattleField::ReadConsoleString(std::string consoleMessage)
 {
-    //Get the player name here
-    printf("What's the name of the character? (Leave empty for random name).\n");
-    std::string name;
-    std::getline(std::cin, name);
+    //asks if the player wanna play again
+    printf("%s", consoleMessage.c_str());
+    //store the player choice in a variable
+    std::string choice;
+    std::getline(std::cin, choice);
 
-    if (name.empty())
+    if (choice.empty())
     {
-        name = Helper::GetRandomName();
+        return "";
     }
 
-    printf("The character name is: %s\n", name.c_str());
-    system("pause");
-
-    //Get the character class
-    Types::CharacterClass characterClass = static_cast<Types::CharacterClass>(classIndex);
-    printf("Player Class Choice: %s\n", Helper::GetStringFromCharacterClass(characterClass).c_str());
-    //get character status based on the class
-    float health, baseDamage;
-    int energy;
-    Helper::BaseStatusFromCharacterClass(characterClass, health, baseDamage, energy);
-
-    //Choose a random location to spawn the player, this location must not have any other characters.
-    int playerID = static_cast<int>(allCharacters.size());
-    //Spawn player at the left side of the field
-    int spawnLocation = grid->GetRandomAvailableIndexInQuad(0, 0, grid->xLength / 4, grid->yLength - 1);
-    grid->grids[spawnLocation].ocupiedID = playerID;
-
-    //Create character object.
-    allCharacters.push_back(std::make_shared<Character>(Character(name, characterClass, health, baseDamage, playerID,
-        PLAYER_CHARACTER_ICON, energy, &grid->grids[spawnLocation], Types::CharacterFlag::Player)));
-    //Increase total players
-    totalNumberOfPlayers++;
-}
-
-void BattleField::CreateEnemyCharacter()
-{
-    //randomly choose the enemy class and set up vital variables
-    int randomInteger = Helper::GetRandomIntFromRange(MINIMAL_CLASS_ID, MAX_CLASS_ID);
-    Types::CharacterClass enemyClass = (Types::CharacterClass)randomInteger;
-    printf("Enemy Class Choice: %s\n", Helper::GetStringFromCharacterClass(enemyClass).c_str());
-    
-    //Get status based on the class.
-    float health, baseDamage;
-    int energy;
-    Helper::BaseStatusFromCharacterClass(enemyClass, health, baseDamage, energy);
-
-    //Choose a random location to spawn the enemy, this location must not have any other characters.
-    int playerID = static_cast<int>(allCharacters.size());
-    //Spawn enemy at right side of the field
-    int spawnLocation = grid->GetRandomAvailableIndexInQuad(grid->xLength - (grid->xLength / 4), 0, grid->xLength - 1, grid->yLength - 1);
-    grid->grids[spawnLocation].ocupiedID = playerID;
-
-    //Create character obj
-    allCharacters.push_back(std::make_shared<Character>(Character(Helper::GetRandomName(), enemyClass, health, baseDamage, playerID,
-        ENEMY_CHARACTER_ICON, energy, &grid->grids[spawnLocation], Types::CharacterFlag::Enemy)));
-
-    //increase total enemies
-    totalNumberOfEnemies++;
-}
-
-void BattleField::StartGame()
-{
-    //shuffle character list to make a random pickup
-    std::random_device rd;
-    std::mt19937 generator(rd());
-    std::shuffle(allCharacters.begin(), allCharacters.end(), generator);
-
-    //update characters index after shuffle.
-    for (int i = 0; i < allCharacters.size(); ++i)
-    {
-        allCharacters[i]->SetPlayerIndex(i);
-    }
-
-    DrawBattleField();
-}
-
-void BattleField::StartTurn()
-{
-    //Increase turn.
-    currentTurn++;
-}
-
-void BattleField::HandleTurn()
-{
-    for (std::vector<std::shared_ptr<Character>>::iterator it = allCharacters.begin(); it != allCharacters.end(); ++it)
-    {
-        std::shared_ptr<Character> current = *it;
-        if (!current->IsDead())
-        {
-            current->StartTurn(this, grid.get(), allCharacters);
-        }
-    }
-}
-
-void BattleField::FinishedTurn()
-{
-    //update count number
-    int playerCount = totalNumberOfPlayers;
-    int enemyCount = totalNumberOfEnemies;
-
-    for (std::vector<std::shared_ptr<Character>>::iterator it = allCharacters.begin(); it != allCharacters.end(); ++it)
-    {
-        std::shared_ptr<Character> current = *it;
-        if (current->IsDead())
-        {
-            //0 == PLAYER, 1 == ENEMY
-            if (current->GetFlag().test(0))
-            {
-                enemyCount--;
-            }
-            else
-            {
-                playerCount--;
-            }
-        }
-    }
-
-    if (playerCount == 0 || enemyCount == 0)
-    {
-        //Set the winner flag.
-        if (playerCount == 0)
-        {
-            winnerFlag.set(0, FLAG_ENEMY);
-        }
-        else
-        {
-            winnerFlag.set(0, FLAG_PLAYER);
-        }
-
-        gameState = Types::GameState::GameEnded;
-    }
-    else
-    {
-        Helper::WaitForMilliseconds(500);
-        gameState = Types::GameState::MainGameLoop_StartTurn;
-    }
-}
-
-void BattleField::OnGameEnd()
-{
-    printf("Game ended!!!\n");
-    //Present the victorious character
-    if (winnerFlag.test(0))
-    {
-        printf("The enemies won this game! Yay?\n");
-    }
-    else
-    {
-        printf("The player won this game! Yay!\n");
-    }
+    return choice;
 }

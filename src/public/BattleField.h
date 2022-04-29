@@ -2,11 +2,6 @@
 
 #include "Character.h"
 
-#define MIN_GRID_X 15
-#define MIN_GRID_Y 10
-#define MAX_GRID_X 30
-#define MAX_GRID_Y 25
-
 class BattleField
 {
 public:
@@ -23,11 +18,15 @@ private:
 	int  GetPlayerChoice();
 	void CreatePlayerCharacter(int classIndex);
 	void CreateEnemyCharacter();
+	void SpawnCharacters();
 	void StartGame();
 	void StartTurn();
 	void HandleTurn();
 	void FinishedTurn();
 	void OnGameEnd();
+
+	int ReadConsoleInt(std::string consoleMessage);
+	std::string ReadConsoleString(std::string consoleMessage);
 
 private:
 	std::shared_ptr<Grid> grid;
@@ -37,7 +36,7 @@ private:
 	int numberOfPossibleTiles;
 	int totalNumberOfPlayers;
 	int totalNumberOfEnemies;
-	std::bitset<1> winnerFlag;
+	std::bitset<FLAG_SIZE> winnerFlag;
 };
 
 

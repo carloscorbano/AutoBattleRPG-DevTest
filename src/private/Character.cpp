@@ -3,16 +3,10 @@
 
 #include <cmath>
 #include <limits>
-#include <assert.h>
 
-Character::Character(std::string name, Types::CharacterClass characterClass, float health, float baseDamage, int index, char icon, int energy,
-    Types::GridBox* spawnLocation, Types::CharacterFlag flag)
-    :   name(name), characterClass(characterClass), health(health), baseDamage(baseDamage), energy(energy), currentBox(spawnLocation),
-        playerIndex(index), isDead(false), icon(icon), target(nullptr), state(Types::CharacterTurnState::SelectingTarget)
-{
-    this->flag.set(0, static_cast<int>(flag));
-    damageMultiplier = static_cast<float>(Helper::GetRandomIntFromRange(1, 100)) * 0.01f;
-}
+Character::Character(Types::CharacterInfo& charInfo)
+    :   info(charInfo), currentBox(nullptr), target(nullptr), state(Types::CharacterTurnState::SelectingTarget)
+{}
 
 Character::~Character()
 {}
@@ -20,12 +14,14 @@ Character::~Character()
 void Character::StartTurn(BattleField* battlefield, Grid* grid, std::vector<std::shared_ptr<Character>> allCharacters)
 {
     //if this character is dead, then just return.
-    if (isDead) return;
+    if (info.isDead) return;
 
     //Set the initial state of the machine.
     state = Types::CharacterTurnState::SelectingTarget;
 
-    int curEnergy = energy;
+    int curEnergy = info.energy;
+    int moveEnergyCost = Helper::GetEnergyCostFromCharacterTurnState(Types::CharacterTurnState::Move);
+    int attackEnergyCost = Helper::GetEnergyCostFromCharacterTurnState(Types::CharacterTurnState::Attack);
     //Character AI state machine.
 
     while (curEnergy > 0)
@@ -34,14 +30,23 @@ void Character::StartTurn(BattleField* battlefield, Grid* grid, std::vector<std:
         {
         case Types::CharacterTurnState::SelectingTarget:
         {
-            SelectTarget(allCharacters);
-            if (CheckTargetIsWithinAttackRange(grid))
+            if (target == nullptr || target->info.isDead)
+            {
+                SelectTarget(allCharacters);
+            }
+
+            if (CheckTargetIsWithinAttackRange(grid) && curEnergy - attackEnergyCost >= 0)
             {
                 state = Types::CharacterTurnState::Attack;
             }
-            else
+            else if(curEnergy - moveEnergyCost >= 0)
             {
                 state = Types::CharacterTurnState::Move;
+            }
+            else
+            {
+                //to break the loop.
+                curEnergy = 0;
             }
         }
             break;
@@ -68,46 +73,38 @@ void Character::StartTurn(BattleField* battlefield, Grid* grid, std::vector<std:
 
 void Character::TakeDamage(float amount) 
 {
-    health -= baseDamage;
-
-	if (health <= 0)
+	if ((info.health -= amount) <= 0)
 	{
 		Die();
 	}
 }
 
-int Character::GetIndex() const
+Types::CharacterInfo& Character::GetCharacterInfo()
 {
-    return playerIndex;
+    return info;
 }
 
-void Character::SetPlayerIndex(int newIndex)
+void Character::SetGridBox(Types::GridBox* box)
 {
-    playerIndex = newIndex;
-    currentBox->ocupiedID = newIndex;
-}
+    if (box == nullptr) return;
 
-char Character::GetIcon() const
-{
-    return icon;
-}
+    //If the character was in other box, change it to empty.
+    if (currentBox != nullptr)
+    {
+        currentBox->occupiedID = EMPTY_GRID;
+    }
 
-bool Character::IsDead() const
-{
-    return isDead;
-}
-
-std::bitset<FLAG_SIZE> Character::GetFlag() const
-{
-    return flag;
+    //Set the new data.
+    currentBox = box;
+    currentBox->occupiedID = info.playerIndex;
 }
 
 bool Character::CheckTargetIsWithinAttackRange(Grid* grid)
 {
-    assert(target != nullptr);
+    if (target == nullptr) return false;
 
     //Check if is within the attack range (8 directions)
-    int attackRange = Helper::GetCharacterAttackRangeFromClass(characterClass);
+    int attackRange = Helper::GetCharacterAttackRangeFromClass(info.characterClass);
     
     int curX = currentBox->xIndex;
     int curY = currentBox->yIndex;
@@ -121,17 +118,22 @@ bool Character::CheckTargetIsWithinAttackRange(Grid* grid)
 
 void Character::SelectTarget(std::vector<std::shared_ptr<Character>> allCharacters)
 {
-    float closestDistance = static_cast<float>(INT_MAX);
+    int closestDistance = INT_MAX;
     Character* closestCharacter = nullptr;
 
     //Check the nearest target
-    for (auto it = allCharacters.begin(); it != allCharacters.end(); ++it)
+    for (std::vector<std::shared_ptr<Character>>::iterator it = allCharacters.begin(); it != allCharacters.end(); ++it)
     {
         //Don't check itself, and don't aim for the same type and don't aim for dead targets
-        if (it->get() == this || ((*it)->GetFlag() == GetFlag()) || (*it)->IsDead()) continue;
+        if (it->get() == this || ((*it)->info.flag == info.flag) || (*it)->info.isDead) continue;
 
+        std::shared_ptr<Character> otherCharacter = *it;
+        
         //Calculate distance
-        float mDistance = CalculateDistance(*currentBox, *(*it)->currentBox);
+        int mDistance = Helper::CalculateManhattanDist(     currentBox->xIndex,
+                                                            currentBox->yIndex,
+                                                            otherCharacter->currentBox->xIndex,
+                                                            otherCharacter->currentBox->yIndex);
 
         if (closestDistance > mDistance)
         {
@@ -145,69 +147,46 @@ void Character::SelectTarget(std::vector<std::shared_ptr<Character>> allCharacte
 
 void Character::WalkTo(Grid* grid)
 {
-    assert(target != nullptr);
+    if (target == nullptr) return;
 
-    //find the fastest way to get to the target
-    int curX = currentBox->xIndex;
-    int curY = currentBox->yIndex;
+    std::vector<Types::GridBox*> boxesAround = grid->GetAllBoxesAroundGridBoxQuadSearch(currentBox->xIndex, currentBox->yIndex, 1, SEARCH_MASK_ONLY_UNOCCUPIED_BOXES);
 
-    float nearestDistance = static_cast<float>(INT_MAX);
-    int nextIndex = -1;
-
-    //Iterate with neightbours gridboxes.
-    for (int y = (curY - 1); y <= (curY + 1); ++y)
+    if (boxesAround.size() == 0)
     {
-        for (int x = (curX - 1); x <= (curX + 1); ++x)
+        //wait for a box to be unoccupied
+        return;
+    }
+
+    int selectedBoxDist = INT_MAX;
+    Types::GridBox* selectedBox = nullptr;
+
+    for (std::vector<Types::GridBox*>::iterator it = boxesAround.begin(); it != boxesAround.end(); ++it)
+    {
+        Types::GridBox* itrBox = *it;
+        int boxDistanceToTarget = Helper::CalculateManhattanDist(itrBox->xIndex, itrBox->yIndex, target->currentBox->xIndex, target->currentBox->yIndex);
+
+        if (selectedBoxDist > boxDistanceToTarget)
         {
-            //check if it is within the grid length and don't get the current grid.
-            if (x < 0 || y < 0 || x >= (grid->xLength) || y >= (grid->yLength) || (x == curX && y == curY)) continue;
-
-            //Get the cur box data.
-            int index = grid->GetIndexFromColumnAndLine(x, y);
-
-            //If the neightbour grid box is already beeing ocupied by another character.
-            if (grid->grids[index].ocupiedID != -1) continue;
-
-            float neightbourDistanceToTarget = CalculateDistance(grid->grids[index], *(target->currentBox));
-
-            if (nearestDistance > neightbourDistanceToTarget)
-            {
-                nearestDistance = neightbourDistanceToTarget;
-                nextIndex = index;
-            }
+            selectedBoxDist = boxDistanceToTarget;
+            selectedBox = itrBox;
         }
     }
 
     //Move
-    currentBox->ocupiedID = -1;
-    grid->grids[nextIndex].ocupiedID = playerIndex;
-    currentBox = &grid->grids[nextIndex];
+    SetGridBox(selectedBox);
 }
 
 void Character::Attack() 
 {
-    assert(target != nullptr);
+    if (target == nullptr) return;
 
-    target->TakeDamage(baseDamage + (baseDamage * damageMultiplier));
+    target->TakeDamage(info.baseDamage + (info.baseDamage * info.damageMultiplier));
 }
 
 void Character::Die()
 {
     //Set dead state, the system will handle this over.
-    isDead = true;
-}
-
-float Character::CalculateDistance(const Types::GridBox& a, const Types::GridBox& b)
-{
-    //Calculate distance
-    int otherX = b.xIndex;
-    int otherY = b.yIndex;
-
-    float deltaX = static_cast<float>(otherX) - static_cast<float>(a.xIndex);
-    float deltaY = static_cast<float>(otherY) - static_cast<float>(a.yIndex);
-
-    //Manhattan distance
-    return (fabs(deltaX) + fabs(deltaY));
+    info.isDead = true;
 }
 
 

@@ -78,35 +78,35 @@ namespace Helper
         {
             outHealth = 100;
             outDamage = 20;
-            outEnergy = 1;
+            outEnergy = 2;
         }
             break;
         case Types::CharacterClass::Warrior:
         {
             outHealth = 120;
             outDamage = 20;
-            outEnergy = 1;
+            outEnergy = 2;
         }
             break;
         case Types::CharacterClass::Cleric:
         {
             outHealth = 80;
             outDamage = 20;
-            outEnergy = 1;
+            outEnergy = 2;
         }
             break;
         case Types::CharacterClass::Archer:
         {
             outHealth = 50;
             outDamage = 20;
-            outEnergy = 1;
+            outEnergy = 2;
         }
             break;
         default:
         {
             outHealth = 100;
             outDamage = 20;
-            outEnergy = 1;
+            outEnergy = 2;
         }
             break;
         }
@@ -136,8 +136,17 @@ namespace Helper
         case Types::CharacterClass::Paladin:    return 1;
         case Types::CharacterClass::Warrior:    return 1;
         case Types::CharacterClass::Cleric:     return 1;
-        case Types::CharacterClass::Archer:     return 2;
+        case Types::CharacterClass::Archer:     return 3;
         default:                                return 0;
         }
+    }
+
+    inline int CalculateManhattanDist(int fromX, int fromY, int toX, int toY)
+    {
+        int deltaX = toX - fromX;
+        int deltaY = toY - fromY;
+
+        //Manhattan distance
+        return (abs(deltaX) + abs(deltaY));
     }
 }
