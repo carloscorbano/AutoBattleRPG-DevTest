@@ -1,12 +1,14 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #define MINIMAL_CLASS_ID 1
 #define MAX_CLASS_ID 4
 
 namespace Types
 {
+
     struct GridBox
     {
         int xIndex;

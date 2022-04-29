@@ -2,45 +2,31 @@
 
 #include "Character.h"
 
-#define MIN_GRID_X 4
-#define MIN_GRID_Y 4
-#define MAX_GRID_X 10
-#define MAX_GRID_Y 10
+#define MIN_GRID_X 15
+#define MIN_GRID_Y 10
+#define MAX_GRID_X 30
+#define MAX_GRID_Y 25
 
 class BattleField
 {
 public:
 	
 	BattleField();
-	
-	void Initialize();
+	~BattleField();
 
+	void Initialize();
 	void DrawBattleField();
 
 private:
 
 	void Setup();
-
-	int GetPlayerChoice();
-
+	int  GetPlayerChoice();
 	void CreatePlayerCharacter(int classIndex);
-
 	void CreateEnemyCharacter();
-
 	void StartGame();
-
 	void StartTurn();
-
 	void HandleTurn();
-
 	void FinishedTurn();
-
-	void AlocatePlayers();
-
-	void AlocatePlayerCharacter();
-
-	void AlocateEnemyCharacter();
-
 	void OnGameEnd();
 
 private:
@@ -51,6 +37,7 @@ private:
 	int numberOfPossibleTiles;
 	int totalNumberOfPlayers;
 	int totalNumberOfEnemies;
+	std::bitset<1> winnerFlag;
 };
 
 

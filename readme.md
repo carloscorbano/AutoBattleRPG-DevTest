@@ -1,7 +1,7 @@
 # Turn RPG system #
 
 > * Kokku Software Engineer Applicant Test
-> * Current Version: 1.0.4
+> * Current Version: 1.0.5
 
 ----
 
@@ -9,11 +9,11 @@
 
 > * [v] This application is an auto-battle RPG, that has a "grid" with cells/tiles/boxes organized as a matrix.
 > * [v] This grid provides the length for the x and y-axis.
-> * [x] There is also a Character with a Name, Health, BaseDamage, DamageMultiplier, current cell/box, target, and an Index.
+> * [v] There is also a Character with a Name, Health, BaseDamage, DamageMultiplier, current cell/box, target, and an Index.
 > * [v] Each team should have one move per turn (except when the move places the character in attack range of an opposing team character)
 > * [v] The game should work with a "battlefield" of any size, including a non-square matrix, for example 6x6 or 6x10 tiles in the grid.
-> * [x] Make sure all the variables in CHARACTER are engaged in a code feature.
-> * [x] The game should inform the player when the battle is over and which team has been declared victorious.
+> * [v] Make sure all the variables in CHARACTER are engaged in a code feature.
+> * [v] The game should inform the player when the battle is over and which team has been declared victorious.
 > * [v] The battlefield should only be reprinted/redrawn if a player makes a move.
 > * [v] Each character should look for a possible target and attack it when this is viable and if not, move closer into attack range.
 > * [v] Each candidate must also implement one of the following extra features in the application, to be selected depending on their month of birth.
@@ -23,6 +23,22 @@
 ----
 
 ### Changelog: ###
+
+> version 1.0.5:
+
+> > * Optimization of `BattleField.h` and `Character.h`, removed the need for search for player icon within all the players, it now holds the index of the vector.
+> > * Added a play again selection after the game is over.
+> > * Added a winner flag to `BattleField.h`.
+> > * Added a field `Name` in `Character.h`.
+> > * Added a method in `Helper.h` to get random names.
+> > * Fixed some editor warnings (size_t cast warnings).
+> > * Cleaned `BattleField.h`, removing some unused methods and old code.
+> > * Added a method to wait for seconds in `Helper.h`.
+> > * Removed the need for press key between turns, now the game runs until the end (using the wait for seconds method to avoid beeing too fast).
+> > * Cleaned `Character.h`, removing some unused old code.
+> > * Added some summary data for the `Helper.h` methods.
+> > * Added a destructor to `BattleField.h`.
+> > * Cleaned some spaces and empty lines from all files.
 
 > version 1.0.4:
 

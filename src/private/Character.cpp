@@ -3,10 +3,11 @@
 
 #include <cmath>
 #include <limits>
+#include <assert.h>
 
-Character::Character(Types::CharacterClass characterClass, float health, float baseDamage, int index, char icon, int energy,
-    Types::GridBox spawnLocation, Types::CharacterFlag flag)
-    :   characterClass(characterClass), health(health), baseDamage(baseDamage), energy(energy), currentBox(spawnLocation),
+Character::Character(std::string name, Types::CharacterClass characterClass, float health, float baseDamage, int index, char icon, int energy,
+    Types::GridBox* spawnLocation, Types::CharacterFlag flag)
+    :   name(name), characterClass(characterClass), health(health), baseDamage(baseDamage), energy(energy), currentBox(spawnLocation),
         playerIndex(index), isDead(false), icon(icon), target(nullptr), state(Types::CharacterTurnState::SelectingTarget)
 {
     this->flag.set(0, static_cast<int>(flag));
@@ -63,74 +64,6 @@ void Character::StartTurn(BattleField* battlefield, Grid* grid, std::vector<std:
             break;
         }
     }
-
-    /* {
-
-        if (CheckCloseTargets(battlefield))
-        {
-            Attack(Character::target);
-
-
-            return;
-        }
-        else
-        {   // if there is no target close enough, calculates in wich direction this character should move to be closer to a possible target
-
-
-            if (currentBox.xIndex > target->currentBox.xIndex)
-            {
-                if (find(battlefield->grids.begin(), battlefield->grids.end(), currentBox.Index - 1) != battlefield->grids.end())
-
-                {
-                    currentBox.ocupied = false;
-                    battlefield->grids[currentBox.Index] = currentBox;
-
-                    currentBox = (battlefield->grids[currentBox.Index - 1]);
-                    currentBox.ocupied = true;
-                    battlefield->grids[currentBox.Index] = currentBox;
-                    //Console.WriteLine($"Player {PlayerIndex} walked left\n");
-                    battlefield->drawBattlefield(5, 5);
-
-                    return;
-                }
-            }
-            else if (currentBox.xIndex < target->currentBox.xIndex)
-            {
-                currentBox.ocupied = false;
-                battlefield->grids[currentBox.Index] = currentBox;
-                currentBox = (battlefield->grids[currentBox.Index + 1]);
-                return;
-                battlefield->grids[currentBox.Index] = currentBox;
-                //Console.WriteLine($"Player {PlayerIndex} walked right\n");
-                battlefield->drawBattlefield(5, 5);
-            }
-
-            if (currentBox.yIndex > target->currentBox.yIndex)
-            {
-                battlefield->drawBattlefield(5, 5);
-                currentBox.ocupied = false;
-                battlefield->grids[currentBox.Index] = currentBox;
-                currentBox = battlefield->grids[(currentBox.Index - battlefield->xLenght)];
-                currentBox.ocupied = true;
-                battlefield->grids[currentBox.Index] = currentBox;
-                //Console.WriteLine($"PlayerB {PlayerIndex} walked up\n");
-                return;
-            }
-            else if (currentBox.yIndex < target->currentBox.yIndex)
-            {
-                currentBox.ocupied = true;
-                battlefield->grids[currentBox.Index] = currentBox;
-                currentBox = battlefield->grids[currentBox.Index + battlefield->xLenght];
-                currentBox.ocupied = false;
-                battlefield->grids[currentBox.Index] = currentBox;
-                //Console.WriteLine($"Player {PlayerIndex} walked down\n");
-                battlefield->drawBattlefield(5, 5);
-
-                return;
-            }
-        }
-    }
-    */
 }
 
 void Character::TakeDamage(float amount) 
@@ -146,6 +79,12 @@ void Character::TakeDamage(float amount)
 int Character::GetIndex() const
 {
     return playerIndex;
+}
+
+void Character::SetPlayerIndex(int newIndex)
+{
+    playerIndex = newIndex;
+    currentBox->ocupiedID = newIndex;
 }
 
 char Character::GetIcon() const
@@ -165,14 +104,16 @@ std::bitset<FLAG_SIZE> Character::GetFlag() const
 
 bool Character::CheckTargetIsWithinAttackRange(Grid* grid)
 {
+    assert(target != nullptr);
+
     //Check if is within the attack range (8 directions)
     int attackRange = Helper::GetCharacterAttackRangeFromClass(characterClass);
     
-    int curX = currentBox.xIndex;
-    int curY = currentBox.yIndex;
+    int curX = currentBox->xIndex;
+    int curY = currentBox->yIndex;
 
-    int targetX = target->currentBox.xIndex;
-    int targetY = target->currentBox.yIndex;
+    int targetX = target->currentBox->xIndex;
+    int targetY = target->currentBox->yIndex;
 
     return (targetX >= (curX - attackRange) && targetX <= (curX + attackRange) &&
             targetY >= (curY - attackRange) && targetY <= (curY + attackRange));
@@ -180,7 +121,7 @@ bool Character::CheckTargetIsWithinAttackRange(Grid* grid)
 
 void Character::SelectTarget(std::vector<std::shared_ptr<Character>> allCharacters)
 {
-    float closestDistance = INT_MAX;
+    float closestDistance = static_cast<float>(INT_MAX);
     Character* closestCharacter = nullptr;
 
     //Check the nearest target
@@ -190,7 +131,7 @@ void Character::SelectTarget(std::vector<std::shared_ptr<Character>> allCharacte
         if (it->get() == this || ((*it)->GetFlag() == GetFlag()) || (*it)->IsDead()) continue;
 
         //Calculate distance
-        float mDistance = CalculateDistance(currentBox, (*it)->currentBox);
+        float mDistance = CalculateDistance(*currentBox, *(*it)->currentBox);
 
         if (closestDistance > mDistance)
         {
@@ -204,11 +145,13 @@ void Character::SelectTarget(std::vector<std::shared_ptr<Character>> allCharacte
 
 void Character::WalkTo(Grid* grid)
 {
-    //find the fastest way to get to the target
-    int curX = currentBox.xIndex;
-    int curY = currentBox.yIndex;
+    assert(target != nullptr);
 
-    float nearestDistance = INT_MAX;
+    //find the fastest way to get to the target
+    int curX = currentBox->xIndex;
+    int curY = currentBox->yIndex;
+
+    float nearestDistance = static_cast<float>(INT_MAX);
     int nextIndex = -1;
 
     //Iterate with neightbours gridboxes.
@@ -217,7 +160,7 @@ void Character::WalkTo(Grid* grid)
         for (int x = (curX - 1); x <= (curX + 1); ++x)
         {
             //check if it is within the grid length and don't get the current grid.
-            if (x < 0 || y < 0 || x >= (grid->xLength) || y >= (grid->yLength) || x == curX || y == curY) continue;
+            if (x < 0 || y < 0 || x >= (grid->xLength) || y >= (grid->yLength) || (x == curX && y == curY)) continue;
 
             //Get the cur box data.
             int index = grid->GetIndexFromColumnAndLine(x, y);
@@ -225,7 +168,7 @@ void Character::WalkTo(Grid* grid)
             //If the neightbour grid box is already beeing ocupied by another character.
             if (grid->grids[index].ocupiedID != -1) continue;
 
-            float neightbourDistanceToTarget = CalculateDistance(grid->grids[index], target->currentBox);
+            float neightbourDistanceToTarget = CalculateDistance(grid->grids[index], *(target->currentBox));
 
             if (nearestDistance > neightbourDistanceToTarget)
             {
@@ -236,28 +179,25 @@ void Character::WalkTo(Grid* grid)
     }
 
     //Move
-    grid->grids[currentBox.Index].ocupiedID = -1;
+    currentBox->ocupiedID = -1;
     grid->grids[nextIndex].ocupiedID = playerIndex;
-    currentBox = grid->grids[nextIndex];
+    currentBox = &grid->grids[nextIndex];
 }
 
 void Character::Attack() 
 {
-    if (target != nullptr)
-    {
-        target->TakeDamage(baseDamage + (baseDamage * damageMultiplier));
-    }
+    assert(target != nullptr);
+
+    target->TakeDamage(baseDamage + (baseDamage * damageMultiplier));
 }
 
 void Character::Die()
 {
-    //Set dead state.
+    //Set dead state, the system will handle this over.
     isDead = true;
-    // TODO >> kill
-    //TODO >> end the game?
 }
 
-float Character::CalculateDistance(Types::GridBox a, Types::GridBox b)
+float Character::CalculateDistance(const Types::GridBox& a, const Types::GridBox& b)
 {
     //Calculate distance
     int otherX = b.xIndex;

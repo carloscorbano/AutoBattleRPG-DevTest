@@ -11,10 +11,8 @@ Grid::Grid(int Lines, int Columns)
         {
             Types::GridBox newBox(x, y, index);
             grids.push_back(newBox);
-            //Console.Write($"{newBox.Index}\n");
         }
     }
-	//drawBattlefield(Lines, Columns);
 }
 
 Grid::~Grid() 
@@ -32,28 +30,6 @@ void Grid::GetColumnAndLineFromIndex(int index, int& line, int& column)
     line = index % xLength;
     column = (index - line) / xLength;
 }
-
-//void Grid::DrawBattlefield()
-//{
-//    //for (int i = 0; i < Lines; i++)
-//    //{
-//    //    for (int j = 0; j < Columns; j++)
-//    //    {
-//    //        Types::GridBox* currentgrid = new Types::GridBox();
-//    //        if (currentgrid->ocupied)
-//    //        {
-//    //            //if()
-//    //            printf("[X]\t");
-//    //        }
-//    //        else
-//    //        {
-//    //            printf("[ ]\t");
-//    //        }
-//    //    }
-//    //    printf("\n");
-//    //}
-//    //printf("\n");
-//}
 
 int Grid::GetRandomAvailableIndexInQuad(int xMin, int yMin, int xMax, int yMax)
 {
