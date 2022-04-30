@@ -2,6 +2,8 @@
 
 #include "Character.h"
 
+class BattleFieldConsole;
+
 class BattleField
 {
 public:
@@ -13,6 +15,8 @@ public:
 	void UpdateBattleField();
 
 private:
+
+	void UI_Intro();
 
 	void Setup();
 	int  GetPlayerChoice();
@@ -29,6 +33,8 @@ private:
 	std::string ReadConsoleString(std::string consoleMessage);
 
 private:
+	bool redrawnUI;
+	std::shared_ptr<BattleFieldConsole> console;
 	std::shared_ptr<Grid> grid;
 	Types::GameState gameState;
 	std::vector<std::shared_ptr<Character>> allCharacters;

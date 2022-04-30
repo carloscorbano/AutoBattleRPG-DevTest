@@ -1,7 +1,7 @@
 # Turn RPG system #
 
 > * Kokku Software Engineer Applicant Test
-> * Current Version: 1.1.1
+> * Current Version: 1.2.0
 
 ----
 
@@ -23,6 +23,16 @@
 ----
 
 ### Changelog: ###
+
+> version 1.2.0:
+
+> > * Major update -> Starting to implement visual feedback.
+> > * Added a `Setup()` in `Console.h` to setup the console and a KeyState to retrieve if the key was pressed.
+> > * Added a `DrawToScreen()` in `Console.h` to handle all the drawing.
+> > * Added base controls to the game.
+> > * Added a input handler in `Console.h`.
+> > * Added UI states in GameState.
+> > * Started to draw scene UI.
 
 > version 1.1.1:
 

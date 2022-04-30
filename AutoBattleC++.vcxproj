@@ -150,12 +150,14 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\private\BattleField.cpp" />
     <ClCompile Include="src\private\Character.cpp" />
+    <ClCompile Include="src\private\Console.cpp" />
     <ClCompile Include="src\private\Grid.cpp" />
     <ClCompile Include="src\private\Types.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\public\BattleField.h" />
     <ClInclude Include="src\public\Character.h" />
+    <ClInclude Include="src\public\Console.h" />
     <ClInclude Include="src\public\Defs.h" />
     <ClInclude Include="src\public\Grid.h" />
     <ClInclude Include="src\public\Helper.h" />

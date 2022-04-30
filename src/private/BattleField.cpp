@@ -1,4 +1,5 @@
 #include "../public/BattleField.h"
+#include "../public/Console.h"
 
 #include <iostream>
 #include <sstream>
@@ -13,6 +14,7 @@ BattleField::BattleField()
     currentTurn = 0;
     gameState = Types::GameState::Setup;
     numberOfPossibleTiles = 0;
+    redrawnUI = true;
 }
 
 BattleField::~BattleField()
@@ -21,12 +23,69 @@ BattleField::~BattleField()
 
 void BattleField::Initialize()
 {
-    gameState = Types::GameState::Setup;
+    if (console.get() == nullptr)
+    {
+        console = std::make_shared<BattleFieldConsole>();
+        console->SetupConsole();
+    }
+
+    redrawnUI = true;
+    gameState = Types::GameState::UI_INTRO;
 
     bool isRunning = true;
     while (isRunning)
     {
+        //Update input data.
+        console->UpdateInput();
+
         switch (gameState)
+        {
+        case Types::GameState::UI_INTRO:
+        {
+            UI_Intro();
+        }
+            break;
+        case Types::GameState::Setup:
+        {
+            Setup();
+        }
+            break;
+        case Types::GameState::CreatingCharacters:
+        {
+
+        }
+            break;
+        case Types::GameState::StartGame:
+        {
+
+        }
+            break;
+        case Types::GameState::MainGameLoop_StartTurn:
+        {
+
+        }
+            break;
+        case Types::GameState::MainGameLoop_ResolvingTurn:
+        {
+
+        }
+            break;
+        case Types::GameState::MainGameLoop_FinishedTurn:
+        {
+
+        }
+            break;
+        case Types::GameState::GameEnded:
+        {
+
+        }
+            break;
+        default:
+            break;
+        }
+
+        //Update console message handler
+        /*switch (gameState)
         {
         case Types::GameState::Setup:
         {
@@ -81,7 +140,7 @@ void BattleField::Initialize()
             break;
         default:
             break;
-        }
+        }*/
     }
 
     //Handles Game ending
@@ -90,28 +149,53 @@ void BattleField::Initialize()
 
 void BattleField::UpdateBattleField()
 {
-    Helper::ClearConsole();
-    
-    for (std::vector<Types::GridBox>::iterator it = grid->grids.begin(); it != grid->grids.end(); ++it)
-    {
-        Types::GridBox current = *it;
-        
-        if ((current.xIndex % grid->xLength) == 0 && current.Index != 0)
-        {
-            printf("\n");
-        }
+   // Helper::ClearConsole();
+   // 
+   // for (std::vector<Types::GridBox>::iterator it = grid->grids.begin(); it != grid->grids.end(); ++it)
+   // {
+   //     Types::GridBox current = *it;
+   //     
+   //     if ((current.xIndex % grid->xLength) == 0 && current.Index != 0)
+   //     {
+   //         printf("\n");
+   //     }
+   //
+   //     if (current.occupiedID == EMPTY_GRID)
+   //     {
+   //         printf("[ ]");
+   //     }
+   //     else
+   //     {
+   //         printf("[%c]", allCharacters[current.occupiedID]->GetCharacterInfo().icon);
+   //     }
+   // }
+   //
+   // printf("\n");
+}
 
-        if (current.occupiedID == EMPTY_GRID)
-        {
-            printf("[ ]");
-        }
-        else
-        {
-            printf("[%c]", allCharacters[current.occupiedID]->GetCharacterInfo().icon);
-        }
+void BattleField::UI_Intro()
+{
+    if (redrawnUI)
+    {
+        //Draw intro
+        RECT screenSize = console->GetScreenSize();
+        std::string title = "Welcome to the automatic Turn RPG system!";
+        std::string subTitle = "- Press [ENTER] to start -";
+
+        short middleScreenX = static_cast<short>(screenSize.right / 2);
+        short middleScreenY = static_cast<short>(screenSize.top / 2);
+
+        console->DrawString(title, FOREGROUND_BLUE | FOREGROUND_INTENSITY, static_cast<short>(middleScreenX - (title.size() / 2)), middleScreenY - 5);
+        console->DrawString(subTitle, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY, static_cast<short>(middleScreenX - (subTitle.size() / 2)), middleScreenY + 5);
+
+        redrawnUI = false;
     }
 
-    printf("\n");
+    if (console->GetKey(Types::Keys::CONSOLE_KEY_ENTER) == Types::KeyState::DOWN)
+    {
+        gameState = Types::GameState::Setup;
+        Helper::ClearConsole();
+    }
 }
 
 void BattleField::Setup()

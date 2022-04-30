@@ -1,5 +1,14 @@
 #pragma once
 
+#pragma region CONSOLE_VARS
+
+#define CONSOLE_WIDTH 1200
+#define CONSOLE_HEIGHT 768
+#define CONSOLE_TITLE L"Turn RPG system - [Kokku Software Engineer Applicant Test]"
+
+#define KEY_DOWN 0x8000
+#pragma endregion CONSOLE_VARS
+
 #pragma region GRID_VARS
 #define MIN_GRID_X 15
 #define MIN_GRID_Y 10
