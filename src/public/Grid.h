@@ -7,8 +7,10 @@ class Grid
 
 public:
 
-    Grid(int Lines, int Columns);
+    Grid();
     ~Grid();
+
+    void CreateGrid();
 
     int GetIndexFromColumnAndLine(int line, int column);
     void GetColumnAndLineFromIndex(int index, int& line, int& column);
@@ -19,7 +21,12 @@ public:
     std::vector<Types::GridBox*> GetAllBoxesAroundGridBoxCircleSearch(int centreX, int centreY, int radius, bool includeCentreBox, int mask);
 
     std::vector<Types::GridBox> grids;
+    //lines
     int xLength;
+    //columns
     int yLength;
+
+    int minXLength, maxXLength;
+    int minYLength, maxYLength;
 };
 

@@ -2,6 +2,7 @@
 #include "../public/BattleField.h"
 
 #include <cmath>
+#include <sstream>
 #include <limits>
 
 Character::Character(Types::CharacterInfo& charInfo)
@@ -50,6 +51,15 @@ void Character::StartTurn(BattleField* battlefield, Grid* grid, std::vector<std:
         {
             WalkTo(grid);
             battlefield->UpdateBattleField();
+            
+            if (target != nullptr)
+            {
+                std::string msgLog;
+                std::stringstream ss(msgLog);
+                ss << info.name << " moved towards " << target->GetCharacterInfo().name;
+                battlefield->UpdateLog(ss.str());
+            }
+
             movements_left--;
             curEnergy -= Helper::GetEnergyCostFromCharacterTurnState(state);
             state = Types::CharacterTurnState::DecidingAction;
@@ -58,7 +68,17 @@ void Character::StartTurn(BattleField* battlefield, Grid* grid, std::vector<std:
             break;
         case Types::CharacterTurnState::Attack:
         {
-            Attack();
+            float damage = Attack();
+
+            if (target != nullptr)
+            {
+                std::string msgLog;
+                std::stringstream ss(msgLog);
+                ss << info.name << " attacked " << target->GetCharacterInfo().name << " dealing " << damage;
+                battlefield->UpdateLog(ss.str());
+                battlefield->UpdateCharactersInfoUI();
+            }
+
             attacks_left--;
             curEnergy -= Helper::GetEnergyCostFromCharacterTurnState(state);
             state = Types::CharacterTurnState::DecidingAction;
@@ -244,10 +264,14 @@ void Character::WalkTo(Grid* grid)
     SetGridBox(selectedBox);
 }
 
-void Character::Attack() 
+float Character::Attack() 
 {
-    if (target == nullptr) return;
-    target->TakeDamage(info.baseDamage + (info.baseDamage * info.damageMultiplier));
+    if (target == nullptr) return 0;
+
+    float damage = info.baseDamage + (info.baseDamage * info.damageMultiplier);
+    target->TakeDamage(damage);
+
+    return damage;
 }
 
 void Character::Die()

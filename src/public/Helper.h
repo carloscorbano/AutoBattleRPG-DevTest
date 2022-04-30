@@ -5,18 +5,10 @@
 #include <random>
 #include <chrono>
 #include <thread>
+#include <string>
 
 namespace Helper
 {
-	/// <summary>
-	/// Clear the console window.
-	/// </summary>
-	inline void ClearConsole()
-	{
-		//std::cout << "\x1B[2J\x1B[H";
-        system("cls");
-	}
-
     /// <summary>
     /// Returns a random integer from given range.
     /// </summary>
@@ -148,5 +140,28 @@ namespace Helper
 
         //Manhattan distance
         return (abs(deltaX) + abs(deltaY));
+    }
+
+    inline std::string GetRegionName(Types::ConsoleRegions region)
+    {
+        switch (region)
+        {
+            case Types::ConsoleRegions::TITLE1:                                 return "TITLE1";
+            case Types::ConsoleRegions::TITLE2:                                 return "TITLE2";
+            case Types::ConsoleRegions::QUESTION1:                              return "QUESTION1";
+            case Types::ConsoleRegions::QUESTION2:                              return "QUESTION2";
+            case Types::ConsoleRegions::AWNSER:                                 return "AWNSER";
+            case Types::ConsoleRegions::_ERROR:                                 return "ERROR";
+            case Types::ConsoleRegions::GRID_PLAYER_TITLE:                      return "GRID_PLAYER_TITLE";
+            case Types::ConsoleRegions::GRID_PLAYER_SUBTITLE:                   return "GRID_PLAYER_SUBTITLE";
+            case Types::ConsoleRegions::GRID_ENEMY_TITLE:                       return "GRID_ENEMY_TITLE";
+            case Types::ConsoleRegions::GRID_ENEMY_SUBTITLE:                    return "GRID_ENEMY_SUBTITLE";
+            case Types::ConsoleRegions::BATTLEFIELD:                            return "BATTLEFIELD";
+            case Types::ConsoleRegions::BATTLEFIELD_BORDER:                     return "BATTLEFIELD_BORDER";
+            case Types::ConsoleRegions::BATTLEFIELD_LOG:                        return "BATTLEFIELD_LOG";
+            case Types::ConsoleRegions::BATTLEFIELD_LOG_TITLE:                  return "BATTLEFIELD_LOG_TITLE";
+            case Types::ConsoleRegions::TURN_TITLE:                             return "TURN_TITLE";
+            default:                                                            return "";
+        }
     }
 }

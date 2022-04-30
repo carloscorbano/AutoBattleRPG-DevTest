@@ -21,7 +21,7 @@ private:
     bool CheckTargetIsWithinAttackRange(Grid* grid);
     void SelectTarget(std::vector<std::shared_ptr<Character>> allCharacters);
     void WalkTo(Grid* grid);
-    void Attack();
+    float Attack();
     void Die();
 
 private:
