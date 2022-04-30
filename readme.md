@@ -33,6 +33,17 @@
 > > * Added a input handler in `Console.h`.
 > > * Added UI states in GameState.
 > > * Started to draw scene UI.
+> > * Added `GameStateInternal` enum to `Types.h`.
+> > * Added `ScreenAreaRegionData` struct to `Types.h`.
+> > * Added `IsKeyDown()`, `IsKeyUp()` and `IsKeyHold()` methos to `Console.h`, changed access modifier of `GetKey()` to private.
+> > * Changed `Character.h` raw pointers to smart pointers.
+> > * Changed `printf` to `TRACE` (definition in `Defs.h`).
+> > * Removed `ReadConsoleString()` and `ReadConsoleInt()` from `BattleField.h`.
+> > * Moved `ClearConsoleScreen()` from `Helper.h` to `Console.h`.
+> > * Added methods to manage the console regions in `Console.h`.
+> > * Added a enum of console regions and added a method to retrieve it's name in `Helpers.h`.
+> > * Improvement of state machine pipeline, presentation and information getter from console.
+> > * Adapted entire system to match the new UI system.
 
 > version 1.1.1:
 

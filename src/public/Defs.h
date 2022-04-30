@@ -4,16 +4,14 @@
 
 #define CONSOLE_WIDTH 1200
 #define CONSOLE_HEIGHT 768
-#define CONSOLE_TITLE L"Turn RPG system - [Kokku Software Engineer Applicant Test]"
+#define CONSOLE_TITLE L"Auto-battle Turn RPG system - [Kokku Software Engineer Applicant Test]"
 
 #define KEY_DOWN 0x8000
+#define MAX_STR_SIZE_TO_DRAW 200
+#define DEFAULT_STR_HEIGHT 1
 #pragma endregion CONSOLE_VARS
 
 #pragma region GRID_VARS
-#define MIN_GRID_X 15
-#define MIN_GRID_Y 10
-#define MAX_GRID_X 30
-#define MAX_GRID_Y 20
 #define EMPTY_GRID -1
 #pragma endregion GRID_VARS
 
@@ -43,3 +41,10 @@
 #define SEARCH_MASK_ONLY_OCCUPIED_BOXES 1
 #define SEARCH_MASK_ONLY_UNOCCUPIED_BOXES 2
 #pragma endregion MASKS
+
+#pragma region MACROS
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
+#define TRACE(...) OutputDebugString(__VA_ARGS__);
+#pragma endregion MACROS

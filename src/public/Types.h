@@ -23,6 +23,23 @@ namespace Types
         }
     };
 
+    struct ScreenAreaData
+    {
+        short width;
+        short height;
+        short centerX;
+        short centerY;
+    };
+
+    struct ScreenRegionData
+    {
+        short X;
+        short Y;
+        short width;
+        short height;
+        WORD wAttributes;
+    };
+
     enum class CharacterFlag
     {
         Player,
@@ -49,6 +66,12 @@ namespace Types
         GameEnded
     };
 
+    enum class GameStateInternal
+    {
+        DrawUI,
+        Logic
+    };
+
     enum class CharacterTurnState
     {
         DecidingAction,
@@ -67,8 +90,8 @@ namespace Types
         float damageMultiplier;
         int energy;
         int playerIndex;
-        bool isDead;
-        char icon;
+        bool isDead{};
+        char icon{};
     };
 
     enum class KeyState
@@ -79,8 +102,28 @@ namespace Types
         DOWN
     };
 
+    enum class ConsoleRegions
+    {
+        TITLE1,
+        TITLE2,
+        QUESTION1,
+        QUESTION2,
+        AWNSER,
+        _ERROR,
+        GRID_PLAYER_TITLE,
+        GRID_PLAYER_SUBTITLE,
+        GRID_ENEMY_TITLE,
+        GRID_ENEMY_SUBTITLE,
+        BATTLEFIELD,
+        BATTLEFIELD_BORDER,
+        BATTLEFIELD_LOG,
+        BATTLEFIELD_LOG_TITLE,
+        TURN_TITLE
+    };
+
     enum class Keys
     {
+        CONSOLE_KEY_BACK = 0x08,
         CONSOLE_KEY_ESCAPE = 0x1B,
         CONSOLE_KEY_ENTER = 0x0D,
         CONSOLE_KEY_0 = 0x30,

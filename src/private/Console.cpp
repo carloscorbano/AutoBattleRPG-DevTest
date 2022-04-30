@@ -1,7 +1,8 @@
 #include "../public/Console.h"
+#include "../public/Helper.h"
 
 BattleFieldConsole::BattleFieldConsole()
-	: hwnd(NULL), hAccelTable(NULL), msg(), inHandle(NULL), outHandle(NULL)
+	: hwnd(NULL), hAccelTable(NULL), msg(), inHandle(NULL), outHandle(NULL), csBufferInfo(), tempKeyboardInput()
 {
 	keys = std::map<int, bool>();
 	for (int i = 0; i < 256; ++i)
@@ -15,11 +16,18 @@ BattleFieldConsole::BattleFieldConsole()
 BattleFieldConsole::~BattleFieldConsole()
 {}
 
-void BattleFieldConsole::DrawString(std::string str, WORD attributes, short posX, short posY)
+void BattleFieldConsole::DrawString(std::string str, Types::ScreenRegionData data)
 {
-	for (int i = 0; i < str.size(); ++i)
+	if (str.empty() || str.size() > MAX_STR_SIZE_TO_DRAW) return;
+
+	short size = static_cast<short>(str.size());
+
+	int cX = data.X + (data.width / 2) - (size / 2);
+	int cY = data.Y + (data.height / 2);
+
+	for (short i = 0; i < size; ++i)
 	{
-		DrawChar(str[i], attributes, posX + i, posY);
+		DrawChar(str[i], data.wAttributes, cX + i, cY);
 	}
 }
 
@@ -46,9 +54,9 @@ void BattleFieldConsole::DrawToScreen(CHAR_INFO* charInfo, COORD& charBufSize, C
 	WriteConsoleOutput(outHandle, charInfo, charBufSize, charPos, &writeArea);
 }
 
-RECT BattleFieldConsole::GetScreenSize()
+Types::ScreenAreaData& BattleFieldConsole::GetScreenData()
 {
-	return screenSize;
+	return screenData;
 }
 
 bool BattleFieldConsole::SetupConsole()
@@ -58,7 +66,7 @@ bool BattleFieldConsole::SetupConsole()
 
 	if (!hwnd)
 	{
-		printf("[ERROR] Failed to get console handler.\n");
+		TRACE(L"[ERROR] Failed to get console handler.\n");
 		return false;
 	}
 
@@ -86,7 +94,7 @@ bool BattleFieldConsole::SetupConsole()
 
 	if (!inHandle || !outHandle)
 	{
-		printf("Failed to get console handle");
+		TRACE(L"Failed to get console handle.\n");
 		return false;
 	}
 
@@ -94,7 +102,7 @@ bool BattleFieldConsole::SetupConsole()
 	DWORD previous_mode;
 	if (!GetConsoleMode(inHandle, &previous_mode))
 	{
-		printf("Failed to get console mode\n");
+		TRACE(L"Failed to get console mode.\n");
 		return false;
 	}
 
@@ -102,7 +110,7 @@ bool BattleFieldConsole::SetupConsole()
 
 	if (!SetConsoleMode(inHandle, ENABLE_EXTENDED_FLAGS | previous_mode))
 	{
-		printf("Failed to set console mode\n");
+		TRACE(L"Failed to set console mode.\n");
 		return false;
 	}
 
@@ -112,40 +120,39 @@ bool BattleFieldConsole::SetupConsole()
 	SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_FRAMECHANGED);
 
 	//Set console screen buffer size
-	CONSOLE_SCREEN_BUFFER_INFOEX sbInfoEx{};
-	sbInfoEx.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
-	if (!GetConsoleScreenBufferInfoEx(outHandle, &sbInfoEx))
+	csBufferInfo.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
+	if (!GetConsoleScreenBufferInfoEx(outHandle, &csBufferInfo))
 	{
-		printf("Failed to get console screen buffer.\n");
+		TRACE(L"Failed to get console screen buffer.\n");
 		return false;
 	}
 
-	short winWidth = sbInfoEx.srWindow.Right - sbInfoEx.srWindow.Left + 1;
-	short winHeight = sbInfoEx.srWindow.Bottom - sbInfoEx.srWindow.Top + 1;
+	short winWidth = csBufferInfo.srWindow.Right - csBufferInfo.srWindow.Left + 1;
+	short winHeight = csBufferInfo.srWindow.Bottom - csBufferInfo.srWindow.Top + 1;
 
-	short sbBufferWidth = sbInfoEx.dwSize.X;
-	short sbBufferHeight = sbInfoEx.dwSize.Y;
+	short sbBufferWidth = csBufferInfo.dwSize.X;
+	short sbBufferHeight = csBufferInfo.dwSize.Y;
 
 	COORD newSize{};
 	newSize.X = sbBufferWidth;
 	newSize.Y = winHeight;
 
 	//set the screenSize var
-	screenSize.left = 0;
-	screenSize.right = newSize.X;
-	screenSize.bottom = 0;
-	screenSize.top = newSize.Y;
+	screenData.width = newSize.X;
+	screenData.height = newSize.Y;
+	screenData.centerX = newSize.X / 2;
+	screenData.centerY = newSize.Y / 2;
 
 	if (!SetConsoleScreenBufferSize(outHandle, newSize))
 	{
-		printf("Failed to set console screen buffer.\n");
+		TRACE(L"Failed to set console screen buffer.\n");
 		return false;
 	}
 
 	DWORD mode;
 	if (!GetConsoleMode(outHandle, &mode))
 	{
-		printf("Failed to get console mode from out handle.\n");
+		TRACE(L"Failed to get console mode from out handle.\n");
 		return false;
 	}
 
@@ -153,7 +160,7 @@ bool BattleFieldConsole::SetupConsole()
 
 	if (!SetConsoleMode(outHandle, mode))
 	{
-		printf("Failed to set console mode outHandle.\n");
+		TRACE(L"Failed to set console mode outHandle.\n");
 		return false;
 	}
 
@@ -161,14 +168,14 @@ bool BattleFieldConsole::SetupConsole()
 	CONSOLE_CURSOR_INFO cursorInfo;
 	if (!GetConsoleCursorInfo(outHandle, &cursorInfo))
 	{
-		printf("Failed to get cursor information.\n");
+		TRACE(L"Failed to get cursor information.\n");
 		return false;
 	}
 	cursorInfo.bVisible = FALSE;
 
 	if (!SetConsoleCursorInfo(outHandle, &cursorInfo))
 	{
-		printf("Failed to set cursor information.\n");
+		TRACE(L"Failed to set cursor information.\n");
 		return false;
 	}
 
@@ -178,7 +185,7 @@ bool BattleFieldConsole::SetupConsole()
 void BattleFieldConsole::UpdateInput()
 {
 	//make a backup from keys.
-	for (int i = 0; i < keys.size(); ++i)
+	for (size_t i = 0; i < keys.size(); ++i)
 	{
 		old_keys[i] = keys[i];
 		keys[i] = false; //reset
@@ -191,18 +198,137 @@ void BattleFieldConsole::UpdateInput()
 	}
 }
 
-Types::KeyState BattleFieldConsole::GetKey(Types::Keys key)
+void BattleFieldConsole::ClearConsoleScreen()
 {
-	int k = static_cast<int>(key);
-	if (keys[k] && old_keys[k])
+	Types::ScreenRegionData area{};
+	area.X = 0;
+	area.Y = 0;
+	area.width = screenData.width;
+	area.height = screenData.height;
+	ClearConsoleArea(area);
+}
+
+void BattleFieldConsole::ClearConsoleArea(Types::ScreenRegionData area)
+{
+	//flush cout buffer
+	std::cout.flush();
+	DWORD written;
+	DWORD length = area.width * area.height;
+	COORD screenCoord = { area.X, area.Y };
+	if (!FillConsoleOutputCharacter(outHandle, TEXT(' '), length, screenCoord, &written))
+	{
+		TRACE(L"Failed to fill console output characters.\n");
+		return;
+	}
+
+	if (!FillConsoleOutputAttribute(outHandle, csBufferInfo.wAttributes, length, screenCoord, &written))
+	{
+		TRACE(L"Failed to fill console output attribute.\n");
+		return;
+	}
+
+	if (!SetConsoleCursorPosition(outHandle, { 0,0 }))
+	{
+		TRACE(L"Failed to set cursor position.\n");
+		return;
+	}
+}
+
+Types::ScreenRegionData BattleFieldConsole::GetRegionData(Types::ConsoleRegions region)
+{
+	std::string name = Helper::GetRegionName(region);
+	if (ContainsRegion(name))
+	{
+		return regions[name];
+	}
+
+	Types::ScreenRegionData srd{};
+	return srd;
+}
+
+void BattleFieldConsole::CreateRegion(std::string name, Types::ScreenRegionData data)
+{
+	if (!ContainsRegion(name))
+	{
+		regions.emplace(name, data);
+	}
+}
+
+void BattleFieldConsole::DrawStringToRegion(std::string str, Types::ConsoleRegions region, bool clear)
+{
+	std::string regionName = Helper::GetRegionName(region);
+	if (clear)
+	{
+		ClearRegion(region);
+	}
+
+	if (ContainsRegion(regionName))
+	{
+		Types::ScreenRegionData data = regions[regionName];
+		DrawString(str, data);
+	}
+}
+
+void BattleFieldConsole::ClearRegion(Types::ConsoleRegions region)
+{
+	std::string regionName = Helper::GetRegionName(region);
+	if (ContainsRegion(regionName))
+	{
+		ClearConsoleArea(regions[regionName]);
+	}
+}
+
+bool BattleFieldConsole::ContainsRegion(std::string regionName)
+{
+	for (std::map<std::string, Types::ScreenRegionData>::iterator it = regions.begin(); it != regions.end(); ++it)
+	{
+		if (it->first == regionName)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool BattleFieldConsole::IsKeyDown(Types::Keys key)
+{
+	return GetKey(static_cast<int>(key)) == Types::KeyState::DOWN;
+}
+
+bool BattleFieldConsole::IsKeyUp(Types::Keys key)
+{
+	return GetKey(static_cast<int>(key)) == Types::KeyState::UP;
+}
+
+bool BattleFieldConsole::IsKeyHold(Types::Keys key)
+{
+	return GetKey(static_cast<int>(key)) == Types::KeyState::HOLD;
+}
+
+bool BattleFieldConsole::AnyKey(Types::KeyState state)
+{
+	for (std::map<int, bool>::iterator it = keys.begin(); it != keys.end(); ++it)
+	{
+		if (GetKey(it->first) == state)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+Types::KeyState BattleFieldConsole::GetKey(int key)
+{
+	if (keys[key] && old_keys[key])
 	{
 		return Types::KeyState::HOLD;
 	}
-	else if (keys[k] && !old_keys[k])
+	else if (keys[key] && !old_keys[key])
 	{
 		return Types::KeyState::DOWN;
 	}
-	else if(!keys[k] && old_keys[k])
+	else if(!keys[key] && old_keys[key])
 	{
 		return Types::KeyState::UP;
 	}
@@ -217,23 +343,46 @@ void BattleFieldConsole::ClearKeyboardInput()
 	tempKeyboardInput = std::string();
 }
 
-void BattleFieldConsole::ListenKeyboardInput()
+void BattleFieldConsole::ListenKeyboardInput(Types::KeyState inputState, size_t maxLength, bool onlyNumbers)
 {
-	tempKeyboardInput += AnyKey();
+	for (std::map<int, bool>::iterator it = keys.begin(); it != keys.end(); ++it)
+	{
+		int val = it->first;
+		
+		if (onlyNumbers &&
+			((val < static_cast<int>(Types::Keys::CONSOLE_KEY_0)		||
+			  val > static_cast<int>(Types::Keys::CONSOLE_KEY_9)))		&&
+			  val != static_cast<int>(Types::Keys::CONSOLE_KEY_BACK)	&&
+			  val != static_cast<int>(Types::Keys::CONSOLE_KEY_ENTER)
+			) continue;
+
+		if (GetKey(val) == inputState)
+		{
+
+			switch (val)
+			{
+			case static_cast<int>(Types::Keys::CONSOLE_KEY_BACK):
+			{
+				if (tempKeyboardInput.length() > 0)
+				{
+					tempKeyboardInput.pop_back();
+				}
+			}
+				break;
+			case static_cast<int>(Types::Keys::CONSOLE_KEY_ENTER):
+				break;
+			default:
+				if (tempKeyboardInput.length() + 1 <= maxLength)
+				{
+					tempKeyboardInput += static_cast<char>(val);
+				}
+				break;
+			}
+		}
+	}
 }
 
 std::string BattleFieldConsole::RetrieveKeyboardInput()
 {
 	return tempKeyboardInput;
-}
-
-char BattleFieldConsole::AnyKey()
-{
-	for (std::map<int, bool>::iterator it = keys.begin(); it != keys.end(); ++it)
-	{
-		if (it->second)
-		{
-			return static_cast<char>(it->first);
-		}
-	}
 }

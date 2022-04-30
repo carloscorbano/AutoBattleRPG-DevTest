@@ -1,25 +1,26 @@
 #include "../public/Grid.h" 
 
-Grid::Grid(int Lines, int Columns)
-{
-    xLength = Lines;
-    yLength = Columns;
+Grid::Grid()
+    : xLength(0), yLength(0), minXLength(0), maxXLength(0), minYLength(0), maxYLength(0)
+{}
 
+Grid::~Grid()
+{}
+
+void Grid::CreateGrid()
+{
     //Little otimization, reserving the size instead of always resizing it.
     grids.reserve(static_cast<size_t>(xLength * yLength));
 
-    for (int y = 0, index = 0; y < Columns; ++y)
+    for (int y = 0, index = 0; y < yLength; ++y)
     {
-        for (int x = 0; x < Lines; ++x, ++index)
+        for (int x = 0; x < xLength; ++x, ++index)
         {
             Types::GridBox newBox(x, y, index);
             grids.push_back(newBox);
         }
     }
 }
-
-Grid::~Grid() 
-{}
 
 int Grid::GetIndexFromColumnAndLine(int line, int column)
 {
@@ -67,7 +68,7 @@ std::vector<Types::GridBox*> Grid::GetAllBoxesAroundGridBoxQuadSearch(int centre
         {
             int index = GetIndexFromColumnAndLine(x, y);
             //Check if is outside of grid or it's itself
-            if (x < 0 || y < 0 || x >= (xLength) || (y >= yLength) || (!includeCentreBox && x == centreX && y == centreY) || index < 0 || index >= grids.size() ||
+            if (x < 0 || y < 0 || x >= (xLength) || (y >= yLength) || (!includeCentreBox && x == centreX && y == centreY) || index < 0 || index >= static_cast<int>(grids.size()) ||
                 (((mask & SEARCH_MASK_ONLY_OCCUPIED_BOXES) == SEARCH_MASK_ONLY_OCCUPIED_BOXES) && grids[index].occupiedID == EMPTY_GRID) ||
                 (((mask & SEARCH_MASK_ONLY_UNOCCUPIED_BOXES) == SEARCH_MASK_ONLY_UNOCCUPIED_BOXES) && grids[index].occupiedID != EMPTY_GRID)
                 ) continue;
@@ -93,7 +94,7 @@ std::vector<Types::GridBox*> Grid::GetAllBoxesAroundGridBoxCircleSearch(int cent
             int index = GetIndexFromColumnAndLine(x, y);
 
             //Check if is outside of grid or it's itself
-            if (x < 0 || y < 0 || x >= xLength || y >= yLength || (!includeCentreBox && x == centreX && y == centreY) || index < 0 || index >= grids.size() ||
+            if (x < 0 || y < 0 || x >= xLength || y >= yLength || (!includeCentreBox && x == centreX && y == centreY) || index < 0 || index >= static_cast<int>(grids.size()) ||
                 (((mask & SEARCH_MASK_ONLY_OCCUPIED_BOXES) == SEARCH_MASK_ONLY_OCCUPIED_BOXES) && grids[index].occupiedID == EMPTY_GRID) ||
                 (((mask & SEARCH_MASK_ONLY_UNOCCUPIED_BOXES) == SEARCH_MASK_ONLY_UNOCCUPIED_BOXES) && grids[index].occupiedID != EMPTY_GRID) ||
                 (Helper::CalculateManhattanDist(x, y, centreX, centreY) > radius)
