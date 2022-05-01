@@ -73,6 +73,8 @@ void BattleField::Initialize()
         default:
             break;
         }
+        
+        Helper::WaitForMilliseconds(1);
     }
 
     OnGameEnd();
