@@ -2,7 +2,6 @@
 
 #include "Types.h"
 
-#include <iostream>
 #include <map>
 
 class BattleFieldConsole
@@ -53,11 +52,7 @@ private:
 	HANDLE inHandle;
 	HANDLE outHandle;
 	CONSOLE_SCREEN_BUFFER_INFOEX csBufferInfo;
-	HACCEL hAccelTable;
-	MSG msg;
 	Types::ScreenAreaData screenData;
-
 	std::map<std::string, Types::ScreenRegionData> regions;
-
 	std::string tempKeyboardInput;
 };

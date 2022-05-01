@@ -1,7 +1,6 @@
 #include "../public/BattleField.h"
 #include "../public/Console.h"
 
-#include <iostream>
 #include <sstream>
 #include <random>
 #include <iterator>

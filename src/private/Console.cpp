@@ -2,7 +2,7 @@
 #include "../public/Helper.h"
 
 BattleFieldConsole::BattleFieldConsole()
-	: hwnd(NULL), hAccelTable(NULL), msg(), inHandle(NULL), outHandle(NULL), csBufferInfo(), tempKeyboardInput()
+	: hwnd(NULL), inHandle(NULL), outHandle(NULL), csBufferInfo(), tempKeyboardInput()
 {
 	keys = std::map<int, bool>();
 	for (int i = 0; i < 256; ++i)
