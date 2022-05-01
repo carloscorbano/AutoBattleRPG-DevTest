@@ -24,6 +24,11 @@
 
 ### Changelog: ###
 
+> version 1.2.0 (readme.md) correction:
+
+> > * Correction of the line in readme.md 'Changed `Character.h` raw pointers to smart pointers.', it was not changed, `Character.h` reference pointers are still raw pointers.
+> > * Changed `project_structure_uml.dia` name to `project_structure.dia` and update information inside the file.
+
 > version 1.2.0:
 
 > > * Major update -> Starting to implement visual feedback.
