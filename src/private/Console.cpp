@@ -185,7 +185,7 @@ bool BattleFieldConsole::SetupConsole()
 void BattleFieldConsole::UpdateInput()
 {
 	//make a backup from keys.
-	for (size_t i = 0; i < keys.size(); ++i)
+	for (int i = 0; i < static_cast<int>(keys.size()); ++i)
 	{
 		old_keys[i] = keys[i];
 		keys[i] = false; //reset
